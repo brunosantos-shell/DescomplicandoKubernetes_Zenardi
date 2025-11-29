@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment-strategy-recreate
+  name: nginx-deployment-strategy-recreate
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx-deployment-strategy-recreate
+  strategy: 
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment-strategy-recreate
+    spec:
+      containers:
+      - name: nginx
+        #image: nginx:1.16.0
+        image: nginx:1.15.0
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "300m"
+          limits:
+            memory: "128Mi"
+            cpu: "600m"
