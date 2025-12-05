@@ -7,3 +7,4 @@ nodes:
 - role: worker
 
 # kind create cluster --config kind.yaml
+# kind delete cluster --name linuxtips
