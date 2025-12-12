@@ -1,14 +1,14 @@
 # Descomplicando o Kubernetes - Expert Mode
 
-## DAY-5
+## DAY-05
 &nbsp;
 
-## Conteúdo do Day-5
+## Conteúdo do Day-05
 
 - [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
-  - [DAY-5](#day-5)
-  - [Conteúdo do Day-5](#conteúdo-do-day-5)
-  - [Inicio da aula do Day-5](#inicio-da-aula-do-day-5)
+  - [DAY-05](#day-05)
+  - [Conteúdo do Day-05](#conteúdo-do-day-05)
+  - [Inicio da aula do Day-05](#inicio-da-aula-do-day-05)
     - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
     - [Instalação de um cluster Kubernetes](#instalação-de-um-cluster-kubernetes)
       - [O que é um cluster Kubernetes?](#o-que-é-um-cluster-kubernetes)
@@ -29,11 +29,11 @@
         - [O que é o CNI?](#o-que-é-o-cni)
       - [Visualizando detalhes dos nodes](#visualizando-detalhes-dos-nodes)
     - [A sua lição de casa](#a-sua-lição-de-casa)
-  - [Final do Day-5](#final-do-day-5)
+  - [Final do Day-05](#final-do-day-05)
 
 &nbsp;
 
-## Inicio da aula do Day-5
+## Inicio da aula do Day-05
 
 ### O que iremos ver hoje?
 
@@ -41,7 +41,7 @@ Hoje nós iremos falar como instalar o Kubernetes em um cluster com 03 nodes, on
 
 Nós iremos utilizar o `kubeadm` para configurar o nosso cluster. Nós iremos conhecer no detalhe como criar um cluster utilizando 03 instancias EC2 da AWS, mas você pode utilizar qualquer outro tipo de instância, desde que seja uma instância Linux, o importante é entender o processo de instalação do Kubernetes e como seus componentes trabalham juntos.
 
-Espero que você se divirta durante o Day-5, e que aprenda muito com o conteúdo que preparamos para você. Hoje o dia será mais curtinho, mas não menos importante. Bora lá! #VAIIII
+Espero que você se divirta durante o Day-05, e que aprenda muito com o conteúdo que preparamos para você. Hoje o dia será mais curtinho, mas não menos importante. Bora lá! #VAIIII
 
 ### Instalação de um cluster Kubernetes
 
@@ -774,9 +774,9 @@ O mais importante é você ter um cluster Kubernetes funcionando e pronto para s
 
 &nbsp;
 
-## Final do Day-5
+## Final do Day-05
 
-Durante o Day-5 você aprendeu como criar um cluster Kubernetes utilizando 3 nodes através do Kubeadm. Você ainda aprender todos os detalhes importantes sobre o cluster e seus componentes. Fizemos a instalação do plugin de rede Weave Net e ainda conhecemos o que é o CNI e os plugins de rede mais utilizados no Kubernetes.
+Durante o Day-05 você aprendeu como criar um cluster Kubernetes utilizando 3 nodes através do Kubeadm. Você ainda aprender todos os detalhes importantes sobre o cluster e seus componentes. Fizemos a instalação do plugin de rede Weave Net e ainda conhecemos o que é o CNI e os plugins de rede mais utilizados no Kubernetes.
 
 Agora partiu documentação do Kubernetes para que você possa se aprofundar ainda mais no assunto e construir um cluster Kubernetes ainda mais robusto e seguro.
 
