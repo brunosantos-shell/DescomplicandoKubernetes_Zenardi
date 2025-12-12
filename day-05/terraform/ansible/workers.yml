@@ -1,0 +1,12 @@
+- name: Configurar Workers
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Verificar se já está no cluster
+      stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf
+
+    - name: Executar Join
+      shell: "{{ hostvars[groups['control_plane'][0]]['join_command'] }}"
+      when: not kubelet_conf.stat.exists
