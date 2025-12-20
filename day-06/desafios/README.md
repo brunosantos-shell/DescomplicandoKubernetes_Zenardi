@@ -1,3 +1,16 @@
+- [Desafios](#desafios)
+    - [Exercício 1: Criando uma StorageClass para AWS EBS (gp3)](#exercício-1-criando-uma-storageclass-para-aws-ebs-gp3)
+    - [Exercício 2: Provisionamento Dinâmico (Dynamic Provisioning) com PVC](#exercício-2-provisionamento-dinâmico-dynamic-provisioning-com-pvc)
+    - [Exercício 3: Consumindo o Volume em um Pod](#exercício-3-consumindo-o-volume-em-um-pod)
+    - [Exercício 4: Alterando a Política de Retenção (Reclaim Policy)](#exercício-4-alterando-a-política-de-retenção-reclaim-policy)
+    - [Exercício 5: Expandindo um Volume (Resizing)](#exercício-5-expandindo-um-volume-resizing)
+- [Desafios Nivel HARD!](#desafios-nivel-hard)
+    - [Exercício 6: StatefulSets e Identidade de Armazenamento Persistente](#exercício-6-statefulsets-e-identidade-de-armazenamento-persistente)
+    - [Exercício 7: Volume Snapshots (Backup e Restore)](#exercício-7-volume-snapshots-backup-e-restore)
+    - [Exercício 8: Volume Cloning (Clonagem de PVC)](#exercício-8-volume-cloning-clonagem-de-pvc)
+    - [Exercício 9: Acesso Compartilhado com EFS (ReadWriteMany)](#exercício-9-acesso-compartilhado-com-efs-readwritemany)
+    - [Exercício 10: Criptografia de Dados com KMS](#exercício-10-criptografia-de-dados-com-kms)
+
 # Desafios 
 
 ---
@@ -81,3 +94,96 @@
 5. Verifique se o tamanho foi atualizado (pode ser necessário reiniciar o Pod ou aguardar o driver CSI processar a mudança no sistema de arquivos).
 
 **Objetivo:** Praticar a redimensionamento de volumes, uma tarefa comum de "Dia 2" na operação de clusters.
+
+
+# Desafios Nivel HARD!
+
+Estes exercícios assumem que você está utilizando um cluster com o driver **AWS EBS CSI** (para snapshots e cloning) e, para o exercício de EFS, o driver **AWS EFS CSI**.
+
+---
+
+### Exercício 6: StatefulSets e Identidade de Armazenamento Persistente
+
+**Conceito:** Diferente de *Deployments*, os *StatefulSets* mantêm uma identidade fixa para cada Pod (web-0, web-1). Isso é crucial para bancos de dados ou sistemas distribuídos.
+
+**Cenário:** Você precisa implantar um sistema distribuído onde cada réplica tenha seu próprio disco dedicado, que não deve ser compartilhado nem perdido se o Pod reiniciar.
+
+**Tarefa:**
+
+1. Crie um manifesto para um `StatefulSet` chamado `app-db`.
+2. Use a imagem `mysql` ou `postgres`.
+3. Em vez de criar PVCs manualmente, use a seção `volumeClaimTemplates` na especificação do StatefulSet.
+4. Configure para ter **3 réplicas**.
+5. Aplique o manifesto.
+6. **Verificação:** Liste os PVCs (`kubectl get pvc`). Você deverá ver `data-app-db-0`, `data-app-db-1`, `data-app-db-2`.
+7. **Teste de Persistência:** Delete o Pod `app-db-0`. O Kubernetes irá recriá-lo. Verifique se ele se liga automaticamente ao **mesmo** PVC `data-app-db-0` anterior, mantendo os dados.
+
+---
+
+### Exercício 7: Volume Snapshots (Backup e Restore)
+
+**Conceito:** O Kubernetes permite padronizar a criação de snapshots de disco (AWS EBS Snapshots) através da API `VolumeSnapshot`. *Nota: Requer que os CRDs de Snapshot e o Snapshot Controller estejam instalados no cluster.*
+
+**Cenário:** Você vai realizar uma manutenção arriscada no banco de dados e precisa garantir um ponto de restauração rápido.
+
+**Tarefa:**
+
+1. Crie uma `VolumeSnapshotClass` apontando para o driver `ebs.csi.aws.com`.
+2. Crie um objeto `VolumeSnapshot` que referencie o PVC `web-pvc` (criado nos exercícios anteriores).
+3. Aguarde o snapshot ficar `ReadyToUse` (verifique com `kubectl get volumesnapshot`). Isso criará um Snapshot real no console da AWS.
+4. **Restore:** Crie um **novo** PVC chamado `web-pvc-restored`.
+5. Na especificação desse novo PVC, adicione o campo `dataSource`, apontando para o `VolumeSnapshot` criado no passo 2.
+6. Crie um Pod para montar esse novo PVC e verifique se os dados originais estão lá.
+
+---
+
+### Exercício 8: Volume Cloning (Clonagem de PVC)
+
+**Conceito:** O recurso de clonagem permite provisionar um novo volume pré-populado com dados de um PVC existente, sem passar pelo processo de snapshot/restore manualmente.
+
+**Cenário:** Sua equipe de QA precisa depurar um problema que ocorre na produção. Eles precisam de uma cópia exata e imediata dos dados atuais para um ambiente de teste isolado.
+
+**Tarefa:**
+
+1. Identifique um PVC existente com dados (ex: `web-pvc`).
+2. Crie um arquivo YAML para um novo PVC chamado `pvc-clone-qa`.
+3. Configure o `storageClassName` igual ao do volume original (deve ser o driver CSI da AWS).
+4. Defina o `dataSource` apontando diretamente para o **PVC de origem** (`kind: PersistentVolumeClaim`, `name: web-pvc`).
+5. Aplique e aguarde o provisionamento.
+6. Monte o `pvc-clone-qa` em um novo Pod e confirme se os arquivos são idênticos aos da origem.
+
+---
+
+### Exercício 9: Acesso Compartilhado com EFS (ReadWriteMany)
+
+**Conceito:** Volumes EBS são **ReadWriteOnce (RWO)** (apenas um node pode escrever por vez). Para que múltiplos pods em nodes diferentes escrevam no mesmo volume (ex: CMS Wordpress, processamento de arquivos em lote), você precisa de **ReadWriteMany (RWX)**. Na AWS, usa-se o EFS (Elastic File System).
+
+**Cenário:** Você tem uma aplicação web escalada em 3 réplicas que precisam ler e gravar arquivos na mesma pasta `/uploads`.
+
+**Tarefa:**
+
+1. Crie um File System EFS na AWS (console ou CLI) e anote o ID (fs-xxxxxx).
+2. Configure a `StorageClass` para o driver EFS (`efs.csi.aws.com`) passando o `fileSystemId` nos parâmetros ou use o modo de provisionamento dinâmico do driver EFS se configurado.
+3. Crie um PVC com `accessModes: ["ReadWriteMany"]`.
+4. Crie um *Deployment* com 2 ou mais réplicas montando esse mesmo PVC.
+5. Entre em um pod, crie um arquivo, e verifique se ele aparece instantaneamente no outro pod.
+
+---
+
+### Exercício 10: Criptografia de Dados com KMS
+
+**Conceito:** Compliance de segurança exige que dados em repouso sejam criptografados com chaves gerenciadas pelo cliente (KMS), e não apenas as chaves padrão da AWS.
+
+**Cenário:** Criar uma classe de armazenamento segura para dados sensíveis.
+
+**Tarefa:**
+
+1. Crie (ou identifique) uma chave KMS na AWS e copie seu ARN.
+2. Crie uma nova `StorageClass` chamada `aws-ebs-encrypted`.
+3. Nos `parameters` da StorageClass, adicione:
+   * `encrypted: "true"`
+   * `kmsKeyId: "<ARN-da-sua-chave-KMS>"`
+
+
+4. Crie um PVC usando essa classe.
+5. Verifique no Console da AWS (seção EC2 -> Volumes) se o volume criado possui o status de criptografia "Encrypted" e se está usando a chave KMS correta (e não a `aws/ebs` padrão).
