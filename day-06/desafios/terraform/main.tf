@@ -1,229 +1,346 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
   region = "us-east-1"
 }
 
-locals {
-  cluster_name = "k8s-linuxtips-lab"
-}
+# Obtém o ID da conta atual para configurar o acesso Root
+data "aws_caller_identity" "current" {}
 
-# ---------------------------------------------------------------------------
-# 1. VPC (Rede)
-# ---------------------------------------------------------------------------
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+# Obtém zonas de disponibilidade
+data "aws_availability_zones" "available" {}
 
-  name = "k8s-vpc"
-  cidr = "10.0.0.0/16"
+# ==============================================================================
+# 1. NETWORKING (VPC, Private/Public Subnets, NAT GW)
+# ==============================================================================
 
-  azs             = ["us-east-1a", "us-east-1b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true 
+resource "aws_vpc" "k8s_vpc" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
   enable_dns_hostnames = true
 
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
-  }
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
-  }
-
   tags = {
-    "OWNER" = "ZEE8CA"
-    "DateToDelete": "Today"
+    Name = "study-eks-vpc"
   }
 }
 
-# ---------------------------------------------------------------------------
-# 2. EKS Cluster & EBS CSI Driver
-# ---------------------------------------------------------------------------
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0" # Atualizado para v20 para compatibilidade com AWS Provider v5
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.k8s_vpc.id
 
-  cluster_name    = local.cluster_name
-  cluster_version = "1.29"
+  tags = {
+    Name = "study-eks-igw"
+  }
+}
 
-  vpc_id                         = module.vpc.vpc_id
-  subnet_ids                     = module.vpc.private_subnets
-  cluster_endpoint_public_access = true
+# --- Subnets Públicas (Para NAT GW e Load Balancers) ---
+resource "aws_subnet" "public" {
+  count                   = 2
+  vpc_id                  = aws_vpc.k8s_vpc.id
+  cidr_block              = cidrsubnet(aws_vpc.k8s_vpc.cidr_block, 8, count.index) # 10.0.0.0/24, 10.0.1.0/24
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
 
-  # Garante que quem roda o terraform seja admin do cluster
-  enable_cluster_creator_admin_permissions = true
+  tags = {
+    Name                     = "study-public-${count.index}"
+    "kubernetes.io/role/elb" = "1" # Tag necessária para Load Balancers públicos
+  }
+}
 
-  # Habilita OIDC para podermos usar Roles de IAM nos Pods
-  enable_irsa = true
+# --- Subnets Privadas (Para os Worker Nodes) ---
+resource "aws_subnet" "private" {
+  count                   = 2
+  vpc_id                  = aws_vpc.k8s_vpc.id
+  cidr_block              = cidrsubnet(aws_vpc.k8s_vpc.cidr_block, 8, count.index + 10) # 10.0.10.0/24, 10.0.11.0/24
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = false
 
-  cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent = true
-    }
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = module.irsa_ebs_csi.iam_role_arn
-    }
+  tags = {
+    Name                              = "study-private-${count.index}"
+    "kubernetes.io/role/internal-elb" = "1" # Tag necessária para Load Balancers internos
+  }
+}
+
+# --- NAT Gateway (Configuração "Single NAT" para economizar) ---
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id # NAT fica na subnet pública
+
+  tags = {
+    Name = "study-nat-gw"
   }
 
-  eks_managed_node_groups = {
-    main = {
-      min_size     = 2
-      max_size     = 3
-      desired_size = 2
+  depends_on = [aws_internet_gateway.igw]
+}
 
-      instance_types = ["t3.medium"]
-      capacity_type  = "ON_DEMAND"
-      
-      # Segurança para nós acessarem EFS
-      vpc_security_group_ids = [aws_security_group.node_efs_access.id]
-      
-      # Necessário para evitar erros de disco na v20 em alguns casos
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            iops                  = 3000
-            throughput            = 125
-            encrypted             = true
-            delete_on_termination = true
-          }
+# --- Route Tables ---
+
+# Rota Pública: Sai pelo Internet Gateway
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.k8s_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  tags = { Name = "study-public-rt" }
+}
+
+# Rota Privada: Sai pelo NAT Gateway
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.k8s_vpc.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+  tags = { Name = "study-private-rt" }
+}
+
+# Associações
+resource "aws_route_table_association" "public" {
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  count          = 2
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
+# ==============================================================================
+# 2. IAM ROLES
+# ==============================================================================
+
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "study-eks-cluster-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "eks.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks_cluster_role.name
+}
+
+resource "aws_iam_role" "eks_node_role" {
+  name = "study-eks-node-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "node_policies" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  ])
+  policy_arn = each.value
+  role       = aws_iam_role.eks_node_role.name
+}
+
+# Cria a entrada de acesso para IAM user
+resource "aws_eks_access_entry" "creator_admin" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = data.aws_caller_identity.current.arn
+  type          = "STANDARD"
+}
+
+
+# ==============================================================================
+# 3. EKS CLUSTER & ACCESS (Onde a mágica do Root acontece)
+# ==============================================================================
+
+resource "aws_eks_cluster" "main" {
+  name     = "study-eks-cluster"
+  role_arn = aws_iam_role.eks_cluster_role.arn
+
+  # Importante: O método de autenticação mudou para usar API Access Entries
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
+  vpc_config {
+    # Nodes ficam nas subnets privadas
+    subnet_ids = concat(aws_subnet.public[*].id, aws_subnet.private[*].id)
+
+    # Endpoint Público deve ser TRUE para você acessar do seu PC de casa
+    endpoint_public_access  = true
+    endpoint_private_access = true
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
+}
+
+# --- Configuração de Acesso para o ROOT USER ---
+
+resource "aws_eks_access_entry" "root_user" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "root_user_policy" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_eks_access_entry.root_user.principal_arn
+
+  # Esta política dá admin total ao Root
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# Dá os poderes de Admin do Cluster para o IAM user
+resource "aws_eks_access_policy_association" "creator_admin_policy" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_eks_access_entry.creator_admin.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# ==============================================================================
+# 4. NODE GROUP (Seguro, Barato, Privado)
+# ==============================================================================
+
+resource "aws_eks_node_group" "main" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "study-workers-spot-arm"
+  node_role_arn   = aws_iam_role.eks_node_role.arn
+
+  # Nodes agora ficam nas subnets PRIVADAS
+  subnet_ids = aws_subnet.private[*].id
+
+  capacity_type  = "SPOT"
+  ami_type       = "BOTTLEROCKET_ARM_64"
+  instance_types = ["t4g.small"]
+
+  scaling_config {
+    desired_size = 1
+    max_size     = 2
+    min_size     = 1
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.node_policies]
+}
+
+# ==============================================================================
+# 5. OUTPUTS
+# ==============================================================================
+
+output "update_kubeconfig_command" {
+  value = "aws eks update-kubeconfig --region us-east-1 --name ${aws_eks_cluster.main.name}"
+}
+
+# ==============================================================================
+# 6. EKS ADD-ONS
+# Gerenciando os componentes essenciais via Terraform
+# ==============================================================================
+
+# 1. EKS Pod Identity Agent (A base para autenticação moderna)
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name  = aws_eks_cluster.main.name
+  addon_name    = "eks-pod-identity-agent"
+  addon_version = "v1.2.0-eksbuild.1" # Opcional: fixar versão ou deixar a mais recente
+
+  # Garante que o addon assuma o controle se já existir no cluster
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+}
+
+# 2. Kube Proxy (Regras de rede/IPtables)
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "kube-proxy"
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+}
+
+# 3. CoreDNS (Resolução de nomes interna)
+resource "aws_eks_addon" "coredns" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "coredns"
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  # CoreDNS precisa que os nós (Compute) já existam para rodar
+  depends_on = [aws_eks_node_group.main]
+}
+
+# 4. VPC CNI (Rede dos Pods) - Configuração Otimizada com Pod Identity
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "vpc-cni"
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  # Configurações avançadas do CNI podem ser passadas aqui se necessário
+  configuration_values = jsonencode({
+    env = {
+      # Habilita prefix delegation para economizar IPs (bom para clusters pequenos)
+      ENABLE_PREFIX_DELEGATION = "true"
+      WARM_PREFIX_TARGET       = "1"
+    }
+  })
+}
+
+# ==============================================================================
+# 7. POD IDENTITY ASSOCIATION (Segurança para o CNI)
+# Removemos a permissão do "Node" e damos apenas para o "Pod"
+# ==============================================================================
+
+# Role exclusiva para o CNI
+resource "aws_iam_role" "vpc_cni_role" {
+  name = "study-vpc-cni-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "pods.eks.amazonaws.com" # Novo Principal do EKS Pod Identity
         }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
       }
-    }
-  }
-
-  tags = {
-    "OWNER" = "ZEE8CA"
-    "DateToDelete": "Today"
-  }
+    ]
+  })
 }
 
-# ---------------------------------------------------------------------------
-# 3. Permissões IAM para o EBS CSI Driver (IRSA)
-# ---------------------------------------------------------------------------
-module "irsa_ebs_csi" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.30"
-
-  role_name             = "ebs-csi-role-${local.cluster_name}"
-  attach_ebs_csi_policy = true
-
-  oidc_providers = {
-    ex = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
-    }
-  }
+# Anexa a policy de rede na Role do CNI (não mais na Role do Node)
+resource "aws_iam_role_policy_attachment" "cni_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.vpc_cni_role.name
 }
 
-# ---------------------------------------------------------------------------
-# 4. KMS Key (Para o Exercício Avançado 5 - Criptografia)
-# ---------------------------------------------------------------------------
-resource "aws_kms_key" "k8s_lab_key" {
-  description             = "Chave KMS para exercicios de Kubernetes Storage"
-  deletion_window_in_days = 7
-  tags = {
-    "OWNER" = "ZEE8CA"
-    "DateToDelete": "Today"
-  }
-}
+# Associação: Diz ao EKS para usar essa Role quando o pod 'aws-node' subir
+resource "aws_eks_pod_identity_association" "vpc_cni" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "kube-system"
+  service_account = "aws-node" # O Service Account padrão do CNI
+  role_arn        = aws_iam_role.vpc_cni_role.arn
 
-resource "aws_kms_alias" "k8s_lab_key_alias" {
-  name          = "alias/k8s-lab-storage"
-  target_key_id = aws_kms_key.k8s_lab_key.key_id
-}
-
-# ---------------------------------------------------------------------------
-# 5. Infraestrutura EFS (Para o Exercício Avançado 4 - ReadWriteMany)
-# ---------------------------------------------------------------------------
-
-resource "aws_security_group" "node_efs_access" {
-  name        = "k8s-node-efs-access"
-  description = "Permite acesso NFS"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    description = "NFS from VPC"
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = [module.vpc.vpc_cidr_block]
-  }
-  
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    "OWNER" = "ZEE8CA"
-    "DateToDelete": "Today"
-  }
-}
-
-resource "aws_efs_file_system" "k8s_efs" {
-  creation_token = "k8s-lab-efs"
-  encrypted      = true
-
-  tags = {
-    "OWNER" = "ZEE8CA"
-    "DateToDelete": "Today"
-     Name = "k8s-lab-efs"
-  }
-}
-
-resource "aws_efs_mount_target" "zone_a" {
-  file_system_id  = aws_efs_file_system.k8s_efs.id
-  subnet_id       = module.vpc.private_subnets[0]
-  security_groups = [aws_security_group.node_efs_access.id]
-}
-
-resource "aws_efs_mount_target" "zone_b" {
-  file_system_id  = aws_efs_file_system.k8s_efs.id
-  subnet_id       = module.vpc.private_subnets[1]
-  security_groups = [aws_security_group.node_efs_access.id]
-}
-
-# ---------------------------------------------------------------------------
-# Outputs
-# ---------------------------------------------------------------------------
-output "cluster_endpoint" {
-  description = "Endpoint for EKS control plane"
-  value       = module.eks.cluster_endpoint
-}
-
-output "configure_kubectl" {
-  description = "Comando para configurar o kubectl"
-  value       = "aws eks --region us-east-1 update-kubeconfig --name ${local.cluster_name}"
-}
-
-output "kms_key_arn" {
-  description = "ARN da chave KMS para o Exercicio 5"
-  value       = aws_kms_key.k8s_lab_key.arn
-}
-
-output "efs_id" {
-  description = "ID do File System EFS para o Exercicio 4"
-  value       = aws_efs_file_system.k8s_efs.id
+  depends_on = [aws_eks_addon.pod_identity]
 }
