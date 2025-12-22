@@ -200,6 +200,8 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
       - [Removendo um Service](day-07/README.md#removendo-um-service)
   - [A sua lição de casa](day-07/README.md#a-sua-lição-de-casa)
 - [Final do Day-07](day-07/README.md#final-do-day-07)
+</details>
+
 
 &nbsp;
 
