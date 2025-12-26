@@ -1,3 +1,5 @@
+![day05-header](../images/day05-header.png)
+
 # Descomplicando o Kubernetes - Expert Mode
 
 ## DAY-05
@@ -19,12 +21,13 @@
         - [Carregando os módulos do kernel](#carregando-os-módulos-do-kernel)
         - [Configurando parâmetros do sistema](#configurando-parâmetros-do-sistema)
         - [Instalando os pacotes do Kubernetes](#instalando-os-pacotes-do-kubernetes)
-        - [Instalando o Docker e o containerd](#instalando-o-docker-e-o-containerd)
+        - [Instalando o containerd](#instalando-o-containerd)
         - [Configurando o containerd](#configurando-o-containerd)
         - [Habilitando o serviço do kubelet](#habilitando-o-serviço-do-kubelet)
         - [Configurando as portas](#configurando-as-portas)
-        - [Iniciando o cluster](#iniciando-o-cluster)
+        - [Inicializando o cluster](#inicializando-o-cluster)
         - [Entendendo o arquivo admin.conf](#entendendo-o-arquivo-adminconf)
+        - [Adicionando os demais nodes ao cluster](#adicionando-os-demais-nodes-ao-cluster)
         - [Instalando o Weave Net](#instalando-o-weave-net)
         - [O que é o CNI?](#o-que-é-o-cni)
       - [Visualizando detalhes dos nodes](#visualizando-detalhes-dos-nodes)

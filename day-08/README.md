@@ -1,3 +1,5 @@
+![day08-header](../images/day08-header.png)
+
 ## Índice
 - [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
   - [DAY-8](#day-8)

@@ -1,3 +1,5 @@
+![day07-header](../images/day07-header.png)
+
 # Descomplicando o Kubernetes - Expert Mode
 
 ## DAY-7

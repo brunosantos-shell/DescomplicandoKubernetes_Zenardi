@@ -1,3 +1,5 @@
+![day-02-header](../images/day02-header.png)
+
 # Descomplicando o Kubernetes - Expert Mode
 &nbsp;
 ## DAY-2
@@ -6,18 +8,20 @@
 ### Indice
 
 - [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
-- [DAY-2](#day-2)
-  - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
-    - [O que é um Pod?](o-que-e-um-pod?)
-    - [Criando um Pod](#criando-um-pod)
-    - [Visualizando detalhes sobre os Pods](#visualizando-detalhes-sobre-os-pods)
-    - [Removendo um Pod](#removendo-um-pod)
-    - [Criando um Pod através de um arquivo YAML](#criando-um-pod-atraves-de-um-arquivo-yaml)
-    - [Visualizando os logs do Pod](#visualizando-os-logs-do-pod)
-    - [Criando um Pod com mais de um container](#criando-um-pod-com-mais-de-um-container)
-  - [Os comandos `attach` e `exec`](#os-comandos-attach-e-exec)
-  - [Criando um container com limites de memória e CPU](#criando-um-container-com-limites-de-memoria-e-cpu)
-  - [Adicionando um volume EmptyDir no Pod](#adicionando-um-volume-emptydir-no-pod)
+  - [DAY-2](#day-2)
+    - [Indice](#indice)
+    - [Inicio da aula do Day-2](#inicio-da-aula-do-day-2)
+    - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
+    - [O que é um Pod?](#o-que-é-um-pod)
+      - [Criando um Pod](#criando-um-pod)
+      - [Visualizando detalhes sobre os Pods](#visualizando-detalhes-sobre-os-pods)
+      - [Removendo um Pod](#removendo-um-pod)
+      - [Criando um Pod através de um arquivo YAML](#criando-um-pod-através-de-um-arquivo-yaml)
+      - [Visualizando os logs do Pod](#visualizando-os-logs-do-pod)
+      - [Criando um Pod com mais de um container](#criando-um-pod-com-mais-de-um-container)
+    - [Os comandos `attach` e `exec`](#os-comandos-attach-e-exec)
+    - [Criando um container com limites de memória e CPU](#criando-um-container-com-limites-de-memória-e-cpu)
+    - [Adicionando um volume EmptyDir no Pod](#adicionando-um-volume-emptydir-no-pod)
 
 
 

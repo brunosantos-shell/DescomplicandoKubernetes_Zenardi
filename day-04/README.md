@@ -1,3 +1,5 @@
+![day04-header](../images/day04-header.png)
+
 # Descomplicando o Kubernetes - Expert Mode
 
 ## DAY-04

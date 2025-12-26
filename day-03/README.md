@@ -1,3 +1,5 @@
+![day-03-header](../images/day03-header.png)
+
 # Descomplicando o Kubernetes - Expert Mode
 
 ## DAY-3
