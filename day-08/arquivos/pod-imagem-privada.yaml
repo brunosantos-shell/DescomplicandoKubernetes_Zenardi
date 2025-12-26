@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: meu-pod
+  labels:
+    app.kubernetes.io/name: meu-pod
+spec:
+  containers:
+  - name: meu-container
+    image: zenardi/nginx
+    imagePullSecrets: 
+    - name: dockerhub-secret
+
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+      requests:
+        memory: "128Mi"
+        cpu: "500m"
+

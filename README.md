@@ -202,6 +202,23 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 - [Final do Day-07](day-07/README.md#final-do-day-07)
 </details>
 
+<details>
+<summary>DAY-08</summary>
+
+- [Descomplicando o Kubernetes - Expert Mode](day-08/README.md#descomplicando-o-kubernetes---expert-mode)
+  - [DAY-8](day-08/README.md#day-8)
+    - [O que iremos ver hoje?](day-08/README.md#o-que-iremos-ver-hoje)
+      - [O que são Secrets?](day-08/README.md#o-que-são-secrets)
+        - [Como os Secrets funcionam](day-08/README.md#como-os-secrets-funcionam)
+        - [Tipos de Secrets](day-08/README.md#tipos-de-secrets)
+        - [Antes de criar um Secret, o Base64](day-08/README.md#antes-de-criar-um-secret-o-base64)
+        - [Criando nosso primeiro Secret](day-08/README.md#criando-nosso-primeiro-secret)
+        - [Usando o nosso primeiro Secret](day-08/README.md#usando-o-nosso-primeiro-secret)
+        - [Criando um Secret para armazenar credenciais Docker](day-08/README.md#criando-um-secret-para-armazenar-credenciais-docker)
+        - [Criando um Secret TLS](day-08/README.md#criando-um-secret-tls)
+      - [ConfigMaps](day-08/README.md#configmaps)
+  - [Final do Day-8](day-08/README.md#final-do-day-8)
+</details>
 
 &nbsp;
 
