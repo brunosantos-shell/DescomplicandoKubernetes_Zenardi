@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-server
+  labels:
+    app.kubernetes.io/name: secure-server
+spec:
+  containers:
+  - name: secure-server
+    image: nginx
+    volumeMounts:
+      - name: tls-certs
+        mountPath: /etc/nginx/tls
+        readOnly: true
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+      requests:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 80
+      - containerPort: 443
+  volumes:
+    - name: tls-certs
+      secret:
+        secretName: meu-site-tls
+

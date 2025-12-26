@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-key
+type: Opaque
+data:
+  key: MTIzNDU=
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spy-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["sleep", "3600"]
+    env:
+    - name: MY_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: api-key
+          key: key

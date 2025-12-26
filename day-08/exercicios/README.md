@@ -35,6 +35,8 @@ Você quer garantir que o Kubernetes está injetando os segredos corretamente.
 * **Tarefa:** Crie um Secret chamado `api-key` com o valor `key=12345`. Crie um Pod usando a imagem `busybox` com o comando `sleep 3600`. Injete esse secret como variável de ambiente.
 * **Validação:** Entre no pod (`kubectl exec`) e rode o comando `env` para ver se a variável aparece lá.
 
+---
+
 **5. Configuração via Arquivo**
 Você tem um arquivo local chamado `index.html` com o conteúdo 
 ```html
