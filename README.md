@@ -25,7 +25,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 ## Conteúdo
 
 <details>
-<summary>DAY-01</summary>
+<summary>DAY-01: Containers e Kubernetes</summary>
 
 - [DAY-01](day-01/README.md#day-01)
   - [O quê preciso saber antes de começar?](day-01/README.md#o-quê-preciso-saber-antes-de-começar)
@@ -74,7 +74,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-02</summary>
+<summary>DAY-02: Pods e Limites de Recursos</summary>
 
 - [DAY-02](day-02/README.md#day-02)
   - [O que iremos ver hoje?](day-02/README.md#o-que-iremos-ver-hoje)
@@ -92,7 +92,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-03</summary>
+<summary>DAY-03: Deployments e estrategias de rollout</summary>
 
 - [DAY-03](day-03/README.md#day-03)
   - [Inicio da aula do Day-03](#inicio-da-aula-do-day-03)
@@ -116,7 +116,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-04</summary>
+<summary>DAY-04: ReplicaSets, DaemonSets e Probes</summary>
 
 - [DAY-04](day-04/README.md)
 - [Inicio da aula do Day-04](day-04/README.md#inicio-da-aula-do-day-04)
@@ -141,7 +141,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-05</summary>
+<summary>DAY-05: Kubernetes multi-nodes</summary>
 
 - [DAY-05](day-05/README.md#day-05)
 - [Conteúdo do Day-05](day-05/README.md#conteúdo-do-day-05)
@@ -171,7 +171,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-06</summary>
+<summary>DAY-06: Volumes</summary>
 
 - [DAY-06](day-06/README.md#day-06)
   - [Conteúdo do Day-06](day-06/README.md#conteúdo-do-day-06)
@@ -188,7 +188,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-07</summary>
+<summary>DAY-07: StatefulSets e Services</summary>
 
 - [DAY-07](day-07/README.md#day-07)
 - [Conteúdo do Day-07](day-07/README.md#conteúdo-do-day-07)
@@ -219,7 +219,7 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 </details>
 
 <details>
-<summary>DAY-08</summary>
+<summary>DAY-08: Secrets e ConfigMaps</summary>
 
 - [Descomplicando o Kubernetes - Expert Mode](day-08/README.md#descomplicando-o-kubernetes---expert-mode)
   - [DAY-8](day-08/README.md#day-8)
