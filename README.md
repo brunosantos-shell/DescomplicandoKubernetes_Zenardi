@@ -474,6 +474,16 @@ Para instalar o eksctl, siga as instruções do link: https://eksctl.io/installa
 
 Após instalar o eksctl, crie o cluster EKS com o comando:
 
+> [!NOTE]
+> Não esqueça de se autenticar usando aws login ou variaveis de ambiente.
+> 
+> AWS_ACCESS_KEY_ID
+> 
+> AWS_SECRET_ACCESS_KEY
 ```bash
-eksctl create cluster --name=eks-cluster --version=1.24 --region=us-east-1 --nodegroup-name=eks-cluster-nodegroup --node-type=t3.medium --nodes=2 --nodes-min=1 --nodes-max=3 --managed
+eksctl create cluster --name=eks-cluster \
+--version=1.24 --region=us-east-1 \
+--nodegroup-name=eks-cluster-nodegroup \
+--node-type=t3.medium \
+--nodes=2 --nodes-min=1 --nodes-max=3 --managed
 ```
