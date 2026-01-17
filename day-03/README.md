@@ -1,6 +1,4 @@
-![day-03-header](../images/day03-header.png)
-
-# Descomplicando o Kubernetes - Expert Mode
+# Descomplicando o Kubernetes
 
 ## DAY-3
 &nbsp;
@@ -8,7 +6,7 @@
 &nbsp;
 ### Conteúdo do Day-3
 
-- [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
+- [Descomplicando o Kubernetes](#descomplicando-o-kubernetes)
   - [DAY-3](#day-3)
     - [Conteúdo do Day-3](#conteúdo-do-day-3)
     - [Inicio da aula do Day-3](#inicio-da-aula-do-day-3)

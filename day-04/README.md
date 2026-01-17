@@ -1,15 +1,12 @@
-![day04-header](../images/day04-header.png)
-
-# Descomplicando o Kubernetes - Expert Mode
-
-## DAY-04
+# Descomplicando o Kubernetes
+## DAY-4
 &nbsp;
 
 &nbsp;
-## Conteúdo do Day-04
+## Conteúdo do Day-4
 
-- [DAY-04](README.md)
-- [Inicio da aula do Day-04](#inicio-da-aula-do-day-04)
+- [DAY-4](README.md)
+- [Inicio da aula do Day-4](#inicio-da-aula-do-day-4)
   - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
   - [ReplicaSet](#replicaset)
     - [O Deployment e o ReplicaSet](#o-deployment-e-o-replicaset)
@@ -26,12 +23,12 @@
     - [Readiness Probe](#readiness-probe)
     - [Startup Probe](#startup-probe)
   - [A sua lição de casa](#a-sua-licao-de-casa)
-  - [Final do Day-04](#final-do-day-04)
+  - [Final do Day-4](#final-do-day-4)
   
 
 &nbsp;
 
-## Inicio da aula do Day-04
+## Inicio da aula do Day-4
 
 ### O que iremos ver hoje?
 
@@ -896,8 +893,6 @@ Acho que o assunto `DaemonSet` já está bem claro. Ainda iremos ver todos esses
 Antes de seguir, eu queria trazer algo novo além dos dois novos objetos que você já aprendeu no dia de hoje.
 Eu queria que você saisse do dia de hoje com a segurança que você e capaz de criar um `Pod`, um `Deployment`, um `ReplicaSet` ou um `DaemonSet`, mas também com a segurança que você pode monitorar o seus suas aplicações que estão rodando dentro do cluster de maneira efetiva e utilizando recursos que o Kubernetes já nos disponibiliza.
 
-![probes](./arquivos/probes.png)
-
 #### O que são as Probes?
 
 As probes são uma forma de você monitorar o seu `Pod` e saber se ele está em um estado saudável ou não. Com elas é possível assegurar que seus `Pods` estão rodando e respondendo de maneira correta, e mais do que isso, que o Kubernetes está testando o que está sendo executado dentro do seu `Pod`.
@@ -1759,8 +1754,8 @@ Sem falar que é inadmissível você ter um cluster Kubernetes com seus `pods` r
 
 &nbsp;
 
-### Final do Day-04
+### Final do Day-4
 
-Durante o Day-04 você aprendeu tudo sobre `ReplicaSet` e `DaemonSet`. O dia de hoje foi importante para que você pudesse entender que um cluster Kubernetes é muito mais do que somente um monte de `Pods` rodando em um monte de `nodes`. E ainda estamos somente no ínicio da nossa jornada, ainda veremos diversos, talvez dezenas de objetos que irão nos ajudar a gerenciar o nosso cluster de maneira mais efetiva.
+Durante o Day-4 você aprendeu tudo sobre `ReplicaSet` e `DaemonSet`. O dia de hoje foi importante para que você pudesse entender que um cluster Kubernetes é muito mais do que somente um monte de `Pods` rodando em um monte de `nodes`. E ainda estamos somente no ínicio da nossa jornada, ainda veremos diversos, talvez dezenas de objetos que irão nos ajudar a gerenciar o nosso cluster de maneira mais efetiva.
 
 Hoje ainda você aprendeu como garantir testes em seus containers, seja no momento da inicialização, ou durante a execução, fazendo com que nossas aplicações sejam mais estáveis e confiáveis.

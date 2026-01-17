@@ -1,16 +1,14 @@
-![day05-header](../images/day05-header.png)
-
 # Descomplicando o Kubernetes - Expert Mode
 
-## DAY-05
+## DAY-5
 &nbsp;
 
-## Conteúdo do Day-05
+## Conteúdo do Day-5
 
 - [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
-  - [DAY-05](#day-05)
-  - [Conteúdo do Day-05](#conteúdo-do-day-05)
-  - [Inicio da aula do Day-05](#inicio-da-aula-do-day-05)
+  - [DAY-5](#day-5)
+  - [Conteúdo do Day-5](#conteúdo-do-day-5)
+  - [Inicio da aula do Day-5](#inicio-da-aula-do-day-5)
     - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
     - [Instalação de um cluster Kubernetes](#instalação-de-um-cluster-kubernetes)
       - [O que é um cluster Kubernetes?](#o-que-é-um-cluster-kubernetes)
@@ -32,11 +30,11 @@
         - [O que é o CNI?](#o-que-é-o-cni)
       - [Visualizando detalhes dos nodes](#visualizando-detalhes-dos-nodes)
     - [A sua lição de casa](#a-sua-lição-de-casa)
-  - [Final do Day-05](#final-do-day-05)
+  - [Final do Day-5](#final-do-day-5)
 
 &nbsp;
 
-## Inicio da aula do Day-05
+## Inicio da aula do Day-5
 
 ### O que iremos ver hoje?
 
@@ -44,7 +42,7 @@ Hoje nós iremos falar como instalar o Kubernetes em um cluster com 03 nodes, on
 
 Nós iremos utilizar o `kubeadm` para configurar o nosso cluster. Nós iremos conhecer no detalhe como criar um cluster utilizando 03 instancias EC2 da AWS, mas você pode utilizar qualquer outro tipo de instância, desde que seja uma instância Linux, o importante é entender o processo de instalação do Kubernetes e como seus componentes trabalham juntos.
 
-Espero que você se divirta durante o Day-05, e que aprenda muito com o conteúdo que preparamos para você. Hoje o dia será mais curtinho, mas não menos importante. Bora lá! #VAIIII
+Espero que você se divirta durante o Day-5, e que aprenda muito com o conteúdo que preparamos para você. Hoje o dia será mais curtinho, mas não menos importante. Bora lá! #VAIIII
 
 ### Instalação de um cluster Kubernetes
 
@@ -174,12 +172,9 @@ Hora de instalar os pacotes do Kubernetes! Coisa linda de ai meu Deus! Aqui vamo
 ```
 sudo apt-get update && sudo apt-get install -y apt-transport-https curl
 
-# Se o diretorio `/etc/apt/keyrings` nao existir, deve ser criado antes do comando curl
-# sudo mkdir -p -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 
-# Isso sobreescreve qualquer config existente em /etc/apt/sources.list.d/kubernetes.list
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
@@ -243,7 +238,7 @@ sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=
 &nbsp;
 
 
-Substitua `<O IP QUE VAI FALAR COM OS NODES>` pelo endereço IP da máquina que está atuando como `control plane` (ip -a).
+Substitua `<O IP QUE VAI FALAR COM OS NODES>` pelo endereço IP da máquina que está atuando como `control plane`.
 
 Após a execução bem-sucedida do comando acima, você verá uma mensagem informando que o cluster foi inicializado com sucesso e todos os detalhes de sua inicialização, conforme é possível ver na saída do comando:
 
@@ -780,9 +775,9 @@ O mais importante é você ter um cluster Kubernetes funcionando e pronto para s
 
 &nbsp;
 
-## Final do Day-05
+## Final do Day-5
 
-Durante o Day-05 você aprendeu como criar um cluster Kubernetes utilizando 3 nodes através do Kubeadm. Você ainda aprender todos os detalhes importantes sobre o cluster e seus componentes. Fizemos a instalação do plugin de rede Weave Net e ainda conhecemos o que é o CNI e os plugins de rede mais utilizados no Kubernetes.
+Durante o Day-5 você aprendeu como criar um cluster Kubernetes utilizando 3 nodes através do Kubeadm. Você ainda aprender todos os detalhes importantes sobre o cluster e seus componentes. Fizemos a instalação do plugin de rede Weave Net e ainda conhecemos o que é o CNI e os plugins de rede mais utilizados no Kubernetes.
 
 Agora partiu documentação do Kubernetes para que você possa se aprofundar ainda mais no assunto e construir um cluster Kubernetes ainda mais robusto e seguro.
 

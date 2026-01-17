@@ -1,6 +1,4 @@
-![day07-header](../images/day07-header.png)
-
-# Descomplicando o Kubernetes - Expert Mode
+# Descomplicando o Kubernetes
 
 ## DAY-7
 &nbsp;
@@ -8,7 +6,7 @@
 &nbsp;
 ## Conteúdo do Day-7
 
-- [Descomplicando o Kubernetes - Expert Mode](#descomplicando-o-kubernetes---expert-mode)
+- [Descomplicando o Kubernetes](#descomplicando-o-kubernetes)
   - [DAY-7](#day-7)
   - [Conteúdo do Day-7](#conteúdo-do-day-7)
     - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
