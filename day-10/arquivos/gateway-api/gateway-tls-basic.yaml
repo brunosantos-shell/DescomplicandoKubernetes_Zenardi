@@ -1,0 +1,46 @@
+---
+# Gateway com suporte a TLS (equivalente a cert-manager do Ingress)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: giropops-gateway-tls
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: giropops-containers-expert-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+# HTTPRoute básica com rewrite
+# Equivalente a: nginx.ingress.kubernetes.io/rewrite-target: /
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: giropops-route-basic
+spec:
+  parentRefs:
+    - name: giropops-gateway-tls
+      sectionName: https
+  hostnames:
+    - giropops.containers.expert
+  rules:
+    - matches:
+        - path:
+            type: Prefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+      backendRefs:
+        - name: giropops-senhas
+          port: 5000

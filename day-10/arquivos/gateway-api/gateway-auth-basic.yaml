@@ -1,0 +1,66 @@
+---
+# Gateway com suporte a autenticação básica
+# Equivalente a: nginx.ingress.kubernetes.io/auth-type: "basic"
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: giropops-gateway-auth
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: giropops-containers-expert-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+# HTTPRoute com autenticação básica
+# Usa ExtensionRef para referência customizada (necessário suporte do gateway)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: giropops-route-auth
+spec:
+  parentRefs:
+    - name: giropops-gateway-auth
+      sectionName: https
+  hostnames:
+    - giropops.containers.expert
+  rules:
+    - matches:
+        - path:
+            type: Prefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+        # Autenticação é tratada através de extensões
+        # Requer suporte específico do gateway
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.networking.k8s.io
+            kind: HTTPRouteAuthFilter
+            name: giropops-basic-auth
+      backendRefs:
+        - name: giropops-senhas
+          port: 5000
+---
+# HTTPRouteAuthFilter customizado para autenticação
+# Isso seria uma extensão específica do gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRouteAuthFilter
+metadata:
+  name: giropops-basic-auth
+spec:
+  type: "basic"
+  secretRef:
+    name: giropops-senhas-users
+  realm: "Autenticação necessária"

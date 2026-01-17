@@ -1,0 +1,64 @@
+---
+# Gateway com suporte a sessões (cookie affinity)
+# Equivalente a: 
+# - nginx.ingress.kubernetes.io/affinity: "cookie"
+# - nginx.ingress.kubernetes.io/session-cookie-name: "giropops-cookie"
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: giropops-gateway-affinity
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: giropops-containers-expert-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+# HTTPRoute com suporte a session affinity
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: giropops-route-affinity
+spec:
+  parentRefs:
+    - name: giropops-gateway-affinity
+      sectionName: https
+  hostnames:
+    - giropops.containers.expert
+  rules:
+    - matches:
+        - path:
+            type: Prefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+        # Session affinity via extensão
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.networking.k8s.io
+            kind: HTTPRouteAffinityFilter
+            name: giropops-cookie-affinity
+      backendRefs:
+        - name: giropops-senhas
+          port: 5000
+---
+# Filtro de afinidade por sessão (extensão customizada)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRouteAffinityFilter
+metadata:
+  name: giropops-cookie-affinity
+spec:
+  type: "cookie"
+  name: "giropops-cookie"
+  ttl: 3600

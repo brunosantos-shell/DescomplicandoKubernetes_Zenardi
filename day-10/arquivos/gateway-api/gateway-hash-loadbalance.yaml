@@ -1,0 +1,63 @@
+---
+# Gateway com suporte a load balancing por hash
+# Equivalente a: nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: giropops-gateway-hash
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: giropops-containers-expert-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+# HTTPRoute com load balancing por hash da URI
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: giropops-route-hash
+spec:
+  parentRefs:
+    - name: giropops-gateway-hash
+      sectionName: https
+  hostnames:
+    - giropops.containers.expert
+  rules:
+    - matches:
+        - path:
+            type: Prefix
+            value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+        # Load balancing com hash via extensão
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.networking.k8s.io
+            kind: HTTPRouteHashFilter
+            name: giropops-hash-by-uri
+      backendRefs:
+        - name: giropops-senhas
+          port: 5000
+          weight: 100
+---
+# Filtro de hash para load balancing (extensão customizada)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRouteHashFilter
+metadata:
+  name: giropops-hash-by-uri
+spec:
+  type: "uri"
+  # Hash baseado na request URI
+  hashKey: "$request_uri"

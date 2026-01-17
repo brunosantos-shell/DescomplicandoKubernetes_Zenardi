@@ -2,6 +2,8 @@
 ## DAY-10: Descomplicando Ingress com TLS, Labels, Annotations e o Cert-manager
 &nbsp;
 
+![header](./images/header.png)
+
 ## Conteúdo do Day-10
 &nbsp;
 
