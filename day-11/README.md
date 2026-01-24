@@ -1,362 +1,642 @@
-# Descomplicando o Kubernetes
-## DAY-11
+- [Descomplicando o Kubernetes](#descomplicando-o-kubernetes)
+  - [DAY-11: Descomplicando o Kube-Prometheus no EKS](#day-11-descomplicando-o-kube-prometheus-no-eks)
+  - [Conteúdo do Day-11](#conteúdo-do-day-11)
+    - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
+    - [O que é o kube-prometheus?](#o-que-é-o-kube-prometheus)
+    - [Instalando o nosso cluster Kubernetes](#instalando-o-nosso-cluster-kubernetes)
+      - [Criando o EKS com arquivos de configuração (on-demand)](#criando-o-eks-com-arquivos-de-configuração-on-demand)
+      - [Criar Cluster com Spot Instances e Bottlerocket](#criar-cluster-com-spot-instances-e-bottlerocket)
+    - [Instalando o Kube-Prometheus](#instalando-o-kube-prometheus)
+    - [Acessando nosso Grafana](#acessando-nosso-grafana)
+    - [Os ServiceMonitors](#os-servicemonitors)
 
+
+# Descomplicando o Kubernetes
+## DAY-11: Descomplicando o Kube-Prometheus no EKS
 &nbsp;
 
 ## Conteúdo do Day-11
-
-- [Descomplicando o Kubernetes](#descomplicando-o-kubernetes)
-  - [DAY-11](#day-11)
-  - [Conteúdo do Day-11](#conteúdo-do-day-11)
-    - [Início da aula do Day-11](#início-da-aula-do-day-11)
-      - [O que iremos ver hoje?](#o-que-iremos-ver-hoje)
-      - [Introdução ao Horizontal Pod Autoscaler (HPA)](#introdução-ao-horizontal-pod-autoscaler-hpa)
-      - [Como o HPA Funciona?](#como-o-hpa-funciona)
-  - [Introdução ao Metrics Server](#introdução-ao-metrics-server)
-    - [Por que o Metrics Server é importante para o HPA?](#por-que-o-metrics-server-é-importante-para-o-hpa)
-    - [Instalando o Metrics Server](#instalando-o-metrics-server)
-      - [No Amazon EKS e na maioria dos clusters Kubernetes](#no-amazon-eks-e-na-maioria-dos-clusters-kubernetes)
-      - [No Minikube:](#no-minikube)
-      - [No KinD (Kubernetes in Docker):](#no-kind-kubernetes-in-docker)
-      - [Verificando a Instalação do Metrics Server](#verificando-a-instalação-do-metrics-server)
-      - [Obtendo Métricas](#obtendo-métricas)
-    - [Criando um HPA](#criando-um-hpa)
-    - [Exemplos Práticos com HPA](#exemplos-práticos-com-hpa)
-      - [Autoscaling com base na utilização de CPU](#autoscaling-com-base-na-utilização-de-cpu)
-      - [Autoscaling com base na utilização de Memória](#autoscaling-com-base-na-utilização-de-memória)
-      - [Configuração Avançada de HPA: Definindo Comportamento de Escalonamento](#configuração-avançada-de-hpa-definindo-comportamento-de-escalonamento)
-      - [ContainerResource](#containerresource)
-      - [Detalhes do Algoritmo de Escalonamento](#detalhes-do-algoritmo-de-escalonamento)
-      - [Configurações Avançadas e Uso Prático](#configurações-avançadas-e-uso-prático)
-      - [Integrando HPA com Prometheus para Métricas Customizadas](#integrando-hpa-com-prometheus-para-métricas-customizadas)
-    - [A sua lição de casa](#a-sua-lição-de-casa)
-    - [Final do Day-11](#final-do-day-11)
-  
 &nbsp;
 
-### Início da aula do Day-11
+### O que iremos ver hoje?
 
-#### O que iremos ver hoje?
+Durante o dia de hoje iremos aprender sobre todas as possibilidades que temos com a utilização do Prometheus + Kubernetes!
+Hoje é dia de conhecer o sensacional [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus), projeto esse criado pelos mesmos criadores do [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator), que nos permite monitorar o nosso cluster de Kubernetes de forma simples e eficiente. Além disso, iremos aprender como utilizar o [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter) para que possamos utilizar o nosso querido e lindo Prometheus como fonte de dados para o [Horizontal Pod Autoscaler](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/), ou seja, iremos aprender como utilizar o nosso querido e lindo Prometheus para escalar nossos pods de forma automática!
 
-Hoje é um dia particularmente fascinante! Vamos desbravar os territórios do Kubernetes, explorando a magia do Horizontal Pod Autoscaler (HPA), uma ferramenta indispensável para quem almeja uma operação eficiente e resiliente. Portanto, afivelem os cintos e preparem-se para uma jornada de descobertas. A aventura #VAIIII começar!
+E ainda de quebra você vai aprender como instalar o Kubernetes, mais do que isso, você vai aprender como instalar um cluster EKS! Sim, você vai aprender como instalar um cluster EKS, o cluster de Kubernetes da AWS, através da ferramenta [eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/what-is-eksctl.html), que é uma ferramenta de linha de comando que nos permite instalar um cluster EKS em minutos!
 
-#### Introdução ao Horizontal Pod Autoscaler (HPA)
+### O que é o kube-prometheus?
 
-O Horizontal Pod Autoscaler, carinhosamente conhecido como HPA, é uma das joias brilhantes incrustadas no coração do Kubernetes. Com o HPA, podemos ajustar automaticamente o número de réplicas de um conjunto de pods, assegurando que nosso aplicativo tenha sempre os recursos necessários para performar eficientemente, sem desperdiçar recursos. O HPA é como um maestro que, com a batuta das métricas, rege a orquestra de pods, assegurando que a harmonia seja mantida mesmo quando a sinfonia do tráfego de rede atinge seu crescendo.
+O kube-prometheus é um conjunto de manifestos do Kubernetes que nos permite ter o Prometheus Operator, Grafana, AlertManager, Node Exporter, Kube-State-Metrics, Prometheus-Adapter instalados e configurados de forma tranquila e com alta disponibilidade. Além disso, ele nos permite ter uma visão completa do nosso cluster de Kubernetes. Ele nos permite monitorar todos os componentes do nosso cluster de Kubernetes, como por exemplo: kube-scheduler, kube-controller-manager, kubelet, kube-proxy, etc.
 
-#### Como o HPA Funciona?
 
-O HPA é o olheiro vigilante que monitora as métricas dos nossos pods. A cada batida do seu coração métrico, que ocorre em intervalos regulares, ele avalia se os pods estão suando a camisa para atender às demandas ou se estão relaxando mais do que deveriam. Com base nessa avaliação, ele toma a decisão sábia de convocar mais soldados para o campo de batalha ou de dispensar alguns para um merecido descanso.
+### Instalando o nosso cluster Kubernetes
+Como dissemos, para esse nosso exemplo iremos utilizar o cluster de Kubernetes da AWS, o EKS. Para instalar o nosso cluster EKS, iremos utilizar a ferramenta [eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/what-is-eksctl.html), portanto precisamos instalá-la em nossa máquina. Para instalar a ferramenta, basta executar o seguinte comando:
 
-Certamente! O Metrics Server é uma componente crucial para o funcionamento do Horizontal Pod Autoscaler (HPA), pois fornece as métricas necessárias para que o HPA tome decisões de escalonamento. Vamos entender um pouco mais sobre o Metrics Server e como instalá-lo em diferentes ambientes Kubernetes, incluindo Minikube e KinD.
-
----
-
-## Introdução ao Metrics Server
-
-Antes de começarmos a explorar o Horizontal Pod Autoscaler (HPA), é essencial termos o Metrics Server instalado em nosso cluster Kubernetes. O Metrics Server é um agregador de métricas de recursos de sistema, que coleta métricas como uso de CPU e memória dos nós e pods no cluster. Essas métricas são vitais para o funcionamento do HPA, pois são usadas para determinar quando e como escalar os recursos.
-
-### Por que o Metrics Server é importante para o HPA?
-
-O HPA utiliza métricas de uso de recursos para tomar decisões inteligentes sobre o escalonamento dos pods. Por exemplo, se a utilização da CPU de um pod exceder um determinado limite, o HPA pode decidir aumentar o número de réplicas desse pod. Da mesma forma, se a utilização da CPU for muito baixa, o HPA pode decidir reduzir o número de réplicas. Para fazer isso de forma eficaz, o HPA precisa ter acesso a métricas precisas e atualizadas, que são fornecidas pelo Metrics Server.
-Portanto, precisamos antes conhecer essa peça fundamental para o dia de hoje! :D
-
-### Instalando o Metrics Server
-
-#### No Amazon EKS e na maioria dos clusters Kubernetes
-
-Durante a nossa aula, estou com um cluster EKS, e para instalar o Metrics Server, podemos usar o seguinte comando:
-
-```bash
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```sh
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
 ```
 
-Esse comando aplica o manifesto do Metrics Server ao seu cluster, instalando todos os componentes necessários.
+Precisamos ter o CLI da aws instalado em nossa máquina, para isso, basta executar o seguinte comando:
 
-#### No Minikube:
-
-A instalação do Metrics Server no Minikube é bastante direta. Use o seguinte comando para habilitar o Metrics Server:
-
-```bash
-minikube addons enable metrics-server
+```sh
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 ```
 
-Após a execução deste comando, o Metrics Server será instalado e ativado em seu cluster Minikube.
+Pronto, agora você já tem o eksctl e o aws instalados em sua máquina.
 
-#### No KinD (Kubernetes in Docker):
+Para que possamos criar tudo o que precisamos na AWS, é importante que você tenha uma conta na AWS, e que tenha as credenciais de acesso configuradas em sua máquina. Para configurar as credenciais de acesso, basta executar o seguinte comando:
 
-Para o KinD, você pode usar o mesmo comando que usou para o EKS:
-
-```bash
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```sh
+aws configure
 ```
 
-#### Verificando a Instalação do Metrics Server
+O comando acima irá solicitar que você informe a sua **AWS Access Key ID**, a sua **AWS Secret Access Key**, a sua **Default region name**, e o seu Default output format. Para saber mais sobre como configurar as credenciais de acesso, basta acessar a [documentação oficial da AWS](https://docs.aws.amazon.com/pt_br/cli/latest/userguide/ci-chap-configure.html).
 
-Após a instalação do Metrics Server, é uma boa prática verificar se ele foi instalado corretamente e está funcionando como esperado. Execute o seguinte comando para obter a lista de pods no namespace `kube-system` e verificar se o pod do Metrics Server está em execução:
+No comando acima estamos baixando o binário do eksctl compactado e descompactando ele na pasta `/tmp`, e depois movendo o binário para a pasta `/usr/local/bin`.
 
-```bash
-kubectl get pods -n kube-system | grep metrics-server
+Lembrando que estou instando em uma máquina Linux, caso que esteja utilizando uma máquina Mac ou Windows, basta acessar a página de releases do projeto e baixar a versão adequada para o seu sistema operacional.
+
+E enquanto você faz a instalação, vale a pena mencionar que o `eksctl` é uma ferramenta criada pela WeaveWorks, empresa que criou o [Flux](https://fluxcd.io/), que é um projeto de GitOps para Kubernetes, além de ter o Weavenet, que é um CNI para Kubernetes, e o Weave Scope, que é uma ferramenta de visualização de clusters de Kubernetes e muito mais, recomendo que vocês dêem uma olhada nos projetos, é sensacional!
+
+Bem, agora você já tem o `eksctl` instalado em sua máquina, então vamos criar o nosso cluster EKS! Para isso, basta executar o seguinte comando:
+
+```sh
+eksctl create cluster \
+--name=eks-cluster \
+--version=1.24 \
+--region=us-east-1 \
+--nodegroup-name=eks-cluster-nodegroup \
+--node-type=t3.medium \
+--nodes=2 \
+--nodes-min=1 \
+--nodes-max=3 \
+--managed
 ```
 
-#### Obtendo Métricas
+O comando acima irá criar um cluster EKS com o nome `eks-cluster`, na região `us-east-1`, com 2 nós do tipo t3.medium, e com um mínimo de 1 nó e um máximo de 3 nós. Além disso, o comando acima irá criar um nodegroup chamado `eks-cluster-nodegroup`. O `eksctl` irá cuidar de toda a infraestrutura necessária para o funcionamento do nosso cluster EKS. A versão do Kubernetes que será instalada no nosso cluster será a `1.24`.
 
-Com o Metrics Server em execução, agora você pode começar a coletar métricas de seu cluster. Aqui está um exemplo de como você pode obter métricas de uso de CPU e memória para todos os seus nodes:
+**Opções importantes:**
 
-```bash
-kubectl top nodes
-```
+| Opção | Descrição | Padrão |
+|-------|-----------|--------|
+| `--name` | Nome do cluster | Obrigatório |
+| `--region` | Região AWS | us-west-2 |
+| `--version` | Versão do Kubernetes | Versão estável atual |
+| `--node-type` | Tipo de instância EC2 | t3.medium |
+| `--nodes` | Número de nós | 3 |
+| `--nodes-min` | Mínimo de nós (autoscaling) | 1 |
+| `--nodes-max` | Máximo de nós (autoscaling) | 4 |
 
-E para obter métricas de uso de CPU e memória para todos os seus pods:
+#### Criando o EKS com arquivos de configuração (on-demand)
 
-```bash
-kubectl top pods
-```
-
-Esses comandos fornecem uma visão rápida da utilização de recursos em seu cluster, o que é crucial para entender e otimizar o desempenho de seus aplicativos.
-
-### Criando um HPA
-
-Antes de nos aprofundarmos no HPA, vamos recapitular criando um deployment simples para o nosso confiável servidor Nginx.
+Para facilitar futuras operações, você pode criar um arquivo YAML:
 
 ```yaml
-# Definição de um Deployment para o servidor Nginx
-apiVersion: apps/v1  # Versão da API que define um Deployment
-kind: Deployment     # Tipo de recurso que estamos definindo
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 metadata:
-  name: nginx-deployment  # Nome do nosso Deployment
+  name: kube-prometheus-demo
+  region: us-east-1
+  version: "1.34"
+nodeGroups:
+  - name: linux-nodes
+    instanceType: t3.medium
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 5
+    ssh:
+      allow: false
+    tags:
+      Environment: production
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+```
+**Criar cluster a partir do arquivo:**
+
+```bash
+eksctl create cluster -f files/eksctl/cluster-config.yaml
+```
+
+#### Criar Cluster com Spot Instances e Bottlerocket
+
+Para otimizar custos e performance, você pode usar:
+
+- **Spot Instances**: Instâncias EC2 com desconto (até 70% mais baratas)
+- **Bottlerocket**: SO minimalista otimizado para containers
+
+**Benefícios**
+
+| Recurso | Benefício |
+|---------|-----------|
+| **Spot Instances** | Economia de até 70% em custos de EC2 |
+| **Bottlerocket** | SO reduzido, menor footprint, melhor segurança |
+| **Combinação** | Máxima otimização de custo-benefício |
+
+**Comando eksctl com Spot + Bottlerocket**
+```bash
+eksctl create cluster \
+  --name kube-prometheus-optimized \
+  --region us-east-1 \
+  --version 1.34 \
+  --nodegroup-name spot-bottlerocket \
+  --node-type t3.medium,t3.large,t2.medium \
+  --nodes 3 \
+  --nodes-min 1 \
+  --nodes-max 5 \
+  --spot \
+  --asg-access
+```
+
+**Opções importantes para Spot:**
+
+| Opção | Descrição |
+|-------|-----------|
+| `--spot` | Habilita uso de Spot Instances |
+| `--asg-access` | Permite acesso ao AutoScaling Group |
+| `--node-type t3.medium,t3.large,t2.medium` | Múltiplos tipos (failover automático) |
+
+**Arquivo de Configuração com Spot + Bottlerocket**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: kube-prometheus-optimized
+  region: us-east-1
+  version: "1.34"
+
+nodeGroups:
+  # Nodegroup com Spot Instances e Bottlerocket
+  - name: spot-bottlerocket
+    instancesDistribution:
+      instanceTypes:
+        - t3.medium
+        - t3.large
+        - t2.medium
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotPrice: "0.05"
+      spotAllocationStrategy: capacity-optimized
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 5
+    amiFamily: Bottlerocket
+    instancePrefix: spot-bottlerocket
+    tags:
+      NodeType: spot-optimized
+      CostCenter: monitoring
+    labels:
+      workload: monitoring
+      instance-type: spot
+
+  # Nodegroup opcional: On-Demand para workloads críticas
+#   - name: on-demand-standard
+#     instanceType: t3.medium
+#     desiredCapacity: 1
+#     minSize: 1
+#     maxSize: 3
+#     taints:
+#       - key: dedicated
+#         value: "true"
+#         effect: NoSchedule
+#     tags:
+#       NodeType: on-demand
+#     labels:
+#       workload: critical
+
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: ebs-csi-driver
+    version: latest
+```
+
+**Criar cluster:**
+
+```bash
+eksctl create cluster -f files/eksctl/cluster-config-optimized.yaml
+```
+
+
+Após a criação do nosso cluster EKS, precisamos instalar o `kubectl` em nossa máquina. Para instalar o kubectl, basta executar o seguinte comando:
+
+```sh
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+```
+
+O comando acima irá baixar o binário do `kubectl` e o colocar na pasta `/usr/local/bin`, e dar permissão de execução para o binário.
+
+Agora que já temos o `kubectl` instalado em nossa máquina, precisamos configurar o `kubectl` para utilizar o nosso cluster EKS. Para isso, basta executar o seguinte comando:
+
+```sh
+aws eks --region us-east-1 update-kubeconfig --name eks-cluster
+```
+
+Aonde `us-east-1` é a região do nosso cluster EKS, e `eks-cluster` é o nome do nosso cluster EKS. Esse comando é necessário para que o `kubectl` saiba qual cluster ele deve utilizar, ele irá pegar as credenciais do nosso cluster EKS e armazenar no arquivo `~/.kube/config`.
+
+**LEMBRE-SE:** Você não precisa ter o Kubernetes rodando no EKS, fique a vontade para escolher onde preferir para seguir o treinamento.
+
+Vamos ver se o `kubectl` está funcionando corretamente? Para isso, basta executar o seguinte comando:
+
+```sh
+kubectl get nodes
+```
+
+Se tudo estiver funcionando corretamente, você deverá ver uma lista com os nós do seu cluster EKS. 😄
+
+Antes de seguirmos em frente, vamos conhecer algums comandos do eksctl, para que possamos gerenciar o nosso cluster EKS. Para listar os clusters EKS que temos em nossa conta, basta executar o seguinte comando:
+
+```sh
+eksctl get cluster -A
+```
+
+O parametro -A é para listar os clusters EKS de todas as regiões. Para listar os clusters EKS de uma região específica, basta executar o seguinte comando:
+
+```sh
+eksctl get cluster -r us-east-1
+```
+
+Para aumentar o número de nós do nosso cluster EKS, basta executar o seguinte comando:
+
+```sh
+eksctl scale nodegroup --cluster=eks-cluster --nodes=3 --nodes-min=1 --nodes-max=3 --name=eks-cluster-nodegroup -r us-east-1
+```
+
+Para diminuir o número de nós do nosso cluster EKS, basta executar o seguinte comando:
+
+```sh
+eksctl scale nodegroup --cluster=eks-cluster --nodes=1 --nodes-min=1 --nodes-max=3 --name=eks-cluster-nodegroup -r us-east-1
+```
+
+Para deletar o nosso cluster EKS, basta executar o seguinte comando:
+
+```sh
+eksctl delete cluster --name=eks-cluster -r us-east-1
+```
+
+Mas não delete o nosso cluster EKS, vamos utilizar ele para os próximos passos! hahahah
+
+
+### Instalando o Kube-Prometheus
+Agora que já temos o nosso cluster EKS criado, vamos instalar o Kube-Prometheus. Para isso, basta executar o seguinte comando:
+
+```sh
+git clone https://github.com/prometheus-operator/kube-prometheus
+cd kube-prometheus
+kubectl create -f manifests/setup
+```
+
+Com o comando acima nós estamos clonando o repositório oficial do projeto, e aplicando os manifests necessários para a instalação do Kube-Prometheus. Após a execução do comando acima, você deverá ver uma mensagem parecida com a seguinte:
+
+```sh
+customresourcedefinition.apiextensions.k8s.io/alertmanagerconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/alertmanagers.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/podmonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/probes.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheuses.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusrules.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/servicemonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/thanosrulers.monitoring.coreos.com created
+namespace/monitoring created
+```
+
+Basicamente o que fizemos foi a instalação de alguns CRDs (Custom Resource Definitions) que são como extensões do Kubernetes, e que são utilizados pelo Kube-Prometheus e com isso o Kubernetes irá reconhecer esses novos recursos, como por exemplo o `PrometheusRule` e o `ServiceMonitor` que irei falar mais a frente.
+
+O processo de instalação dos CRDs pode demorar alguns minutos, então vamos aguardar a instalação terminar. 😄
+
+Para verificar se a instalação dos CRDs foi concluída, o comando abaixo deverá funcionar,se ainda não funcionar, aguarde alguns minutos e tente novamente.
+
+```sh
+kubectl get servicemonitors -A
+```
+
+Após a instalação dos CRDs, vamos instalar o Prometheus e o Alertmanager. Para isso, basta executar o seguinte comando:
+
+```sh
+kubectl apply -f manifests/
+```
+
+
+Com o comando acima nós estamos aplicando os manifests necessários para a instalação do Prometheus e do Alertmanager. Após a execução do comando acima, você deverá ver uma mensagem parecida com a seguinte:
+
+```sh
+alertmanager.monitoring.coreos.com/main created
+networkpolicy.networking.k8s.io/alertmanager-main created
+poddisruptionbudget.policy/alertmanager-main created
+prometheusrule.monitoring.coreos.com/alertmanager-main-rules created
+secret/alertmanager-main created
+service/alertmanager-main created
+serviceaccount/alertmanager-main created
+servicemonitor.monitoring.coreos.com/alertmanager-main created
+clusterrole.rbac.authorization.k8s.io/blackbox-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/blackbox-exporter created
+configmap/blackbox-exporter-configuration created
+deployment.apps/blackbox-exporter created
+networkpolicy.networking.k8s.io/blackbox-exporter created
+service/blackbox-exporter created
+serviceaccount/blackbox-exporter created
+servicemonitor.monitoring.coreos.com/blackbox-exporter created
+secret/grafana-config created
+secret/grafana-datasources created
+configmap/grafana-dashboard-alertmanager-overview created
+configmap/grafana-dashboard-apiserver created
+configmap/grafana-dashboard-cluster-total created
+configmap/grafana-dashboard-controller-manager created
+configmap/grafana-dashboard-grafana-overview created
+configmap/grafana-dashboard-k8s-resources-cluster created
+configmap/grafana-dashboard-k8s-resources-namespace created
+configmap/grafana-dashboard-k8s-resources-node created
+configmap/grafana-dashboard-k8s-resources-pod created
+configmap/grafana-dashboard-k8s-resources-workload created
+configmap/grafana-dashboard-k8s-resources-workloads-namespace created
+configmap/grafana-dashboard-kubelet created
+configmap/grafana-dashboard-namespace-by-pod created
+configmap/grafana-dashboard-namespace-by-workload created
+configmap/grafana-dashboard-node-cluster-rsrc-use created
+configmap/grafana-dashboard-node-rsrc-use created
+configmap/grafana-dashboard-nodes-darwin created
+configmap/grafana-dashboard-nodes created
+configmap/grafana-dashboard-persistentvolumesusage created
+configmap/grafana-dashboard-pod-total created
+configmap/grafana-dashboard-prometheus-remote-write created
+configmap/grafana-dashboard-prometheus created
+configmap/grafana-dashboard-proxy created
+configmap/grafana-dashboard-scheduler created
+configmap/grafana-dashboard-workload-total created
+configmap/grafana-dashboards created
+deployment.apps/grafana created
+networkpolicy.networking.k8s.io/grafana created
+prometheusrule.monitoring.coreos.com/grafana-rules created
+service/grafana created
+serviceaccount/grafana created
+servicemonitor.monitoring.coreos.com/grafana created
+prometheusrule.monitoring.coreos.com/kube-prometheus-rules created
+clusterrole.rbac.authorization.k8s.io/kube-state-metrics created
+clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created
+deployment.apps/kube-state-metrics created
+networkpolicy.networking.k8s.io/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kube-state-metrics-rules created
+service/kube-state-metrics created
+serviceaccount/kube-state-metrics created
+servicemonitor.monitoring.coreos.com/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kubernetes-monitoring-rules created
+servicemonitor.monitoring.coreos.com/kube-apiserver created
+servicemonitor.monitoring.coreos.com/coredns created
+servicemonitor.monitoring.coreos.com/kube-controller-manager created
+servicemonitor.monitoring.coreos.com/kube-scheduler created
+servicemonitor.monitoring.coreos.com/kubelet created
+clusterrole.rbac.authorization.k8s.io/node-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/node-exporter created
+daemonset.apps/node-exporter created
+networkpolicy.networking.k8s.io/node-exporter created
+prometheusrule.monitoring.coreos.com/node-exporter-rules created
+service/node-exporter created
+serviceaccount/node-exporter created
+servicemonitor.monitoring.coreos.com/node-exporter created
+clusterrole.rbac.authorization.k8s.io/prometheus-k8s created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+networkpolicy.networking.k8s.io/prometheus-k8s created
+poddisruptionbudget.policy/prometheus-k8s created
+prometheus.monitoring.coreos.com/k8s created
+prometheusrule.monitoring.coreos.com/prometheus-k8s-prometheus-rules created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s-config created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s-config created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+service/prometheus-k8s created
+serviceaccount/prometheus-k8s created
+servicemonitor.monitoring.coreos.com/prometheus-k8s created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+clusterrole.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrolebinding.rbac.authorization.k8s.io/resource-metrics:system:auth-delegator created
+clusterrole.rbac.authorization.k8s.io/resource-metrics-server-resources created
+configmap/adapter-config created
+deployment.apps/prometheus-adapter created
+networkpolicy.networking.k8s.io/prometheus-adapter created
+poddisruptionbudget.policy/prometheus-adapter created
+rolebinding.rbac.authorization.k8s.io/resource-metrics-auth-reader created
+service/prometheus-adapter created
+serviceaccount/prometheus-adapter created
+servicemonitor.monitoring.coreos.com/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/prometheus-operator created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-operator created
+deployment.apps/prometheus-operator created
+networkpolicy.networking.k8s.io/prometheus-operator created
+prometheusrule.monitoring.coreos.com/prometheus-operator-rules created
+service/prometheus-operator created
+serviceaccount/prometheus-operator created
+servicemonitor.monitoring.coreos.com/prometheus-operator created
+```
+
+
+Com isso fizemos a instalação da Stack do nosso Kube-Prometheus, que é composta pelo Prometheus, pelo Alertmanager, Blackbox Exporter e Grafana. 😄
+Perceba que ele já está configurando um monte de outras coisas como os ConfigMaps, Secrets, ServiceAccounts, etc.
+
+Para verificar se a instalação foi concluída, basta executar o seguinte comando:
+
+```sh
+kubectl get pods -n monitoring
+```
+
+O resultado esperado é o seguinte:
+```sh
+NAME                                  READY   STATUS    RESTARTS   AGE
+alertmanager-main-0                   2/2     Running   0          57s
+alertmanager-main-1                   2/2     Running   0          57s
+alertmanager-main-2                   2/2     Running   0          57s
+blackbox-exporter-cbb9c96b-t8z68      3/3     Running   0          94s
+grafana-589787799d-pxsts              1/1     Running   0          80s
+kube-state-metrics-557d857c5d-kt8dd   3/3     Running   0          78s
+node-exporter-2n6sz                   2/2     Running   0          74s
+node-exporter-mwq6b                   2/2     Running   0          74s
+prometheus-adapter-758645c65b-54c7g   1/1     Running   0          64s
+prometheus-adapter-758645c65b-cmjrv   1/1     Running   0          64s
+prometheus-k8s-0                      2/2     Running   0          57s
+prometheus-k8s-1                      2/2     Running   0          57s
+prometheus-operator-c766b9756-vndp9   2/2     Running   0          63s
+```
+
+Pronto, já temos o Prometheus, Alertmanager, Blackbox Exporter, Node Exporter e Grafana instalados. 😄
+
+Nesse meu cluster, eu estou com dois nodes, por isso temos dois pods do Node Exporter e dois pods do Prometheus chamados de `prometheus-k8s-0` e `prometheus-k8s-1`.
+
+### Acessando nosso Grafana
+
+Agora que já temos o nosso Kube-Prometheus instalado, vamos acessar o nosso Grafana e verificar se está tudo funcionando corretamente. Para isso, vamos utilizar o `kubectl port-forward` para acessar o Grafana localmente. Para isso, basta executar o seguinte comando:
+
+```sh
+kubectl port-forward -n monitoring svc/grafana 33000:3000
+```
+
+Agora que já temos o nosso Grafana rodando localmente, vamos acessar o nosso Grafana através do navegador. Para isso, basta acessar a seguinte URL: http://localhost:33000
+
+Para acessar o Grafana, vamos utilizar o usuário `admin` e a senha `admin`, e já no primeiro login ele irá pedir para você alterar a senha. Você já conhece o Grafana, não preciso mais apresenta-los, certo? 😄
+
+
+
+O importante aqui é ver a quantidade de Dashboards criados pelo Kube-Prometheus. 😄
+Temos Dashboards que mostram detalhes do API Server e de diversos componentes do Kubernetes, como Node, Pod, Deployment, etc.
+
+
+
+Também temos Dashboards que mostram detalhes do nosso cluster EKS, como por exemplo o dashboard `Kubernetes / Compute Resources / Cluster`, que mostra detalhes de CPU e memória utilizados por todos os nós do nosso cluster EKS.
+
+
+
+Dashboards que mostram detalhes do nosso cluster EKS, como por exemplo o dashboard `Kubernetes / Compute Resources / Namespace (Pods)`, que mostra detalhes de CPU e memória utilizados por todos os pods de todos os namespaces do nosso cluster EKS.
+
+
+
+Ainda temos Dashboards que mostram detalhes do nosso cluster EKS, como por exemplo o dashboard `Kubernetes / Compute Resources / Namespace (Workloads)`, que mostra detalhes de CPU e memória utilizados por todos os deployments, statefulsets e daemonsets de todos os namespaces do nosso cluster EKS.
+
+
+
+Também temos Dashboards que mostram detalhes do nosso cluster EKS, como por exemplo o dashboard `Kubernetes / Compute Resources / Node`, que mostra detalhes de CPU e memória utilizados por todos os nós do nosso cluster EKS.
+
+
+
+Também temos Dashboards que mostram detalhes do nosso cluster EKS, como por exemplo o dashboard `Kubernetes / Compute Resources / Pod (Containers)`, que mostra detalhes de CPU e memória utilizados por todos os containers de todos os pods do nosso cluster EKS.
+
+
+
+Eu não vou ficar aqui dando spoilers, vai lá você e confere a quantidade enorme de Dashboards que o Kube-Prometheus já vem com ele. \o/
+
+
+### Os ServiceMonitors
+
+Um dos principais recursos que o Kube-Prometheus utiliza é o ServiceMonitor. O ServiceMonitor é um recurso do Prometheus Operator que permite que você configure o Prometheus para monitorar um serviço. Para isso, você precisa criar um ServiceMonitor para cada serviço que você deseja monitorar.
+
+O Kube-Prometheus já vem com vários ServiceMonitors configurados, como por exemplo o ServiceMonitor do API Server, do Node Exporter, do Blackbox Exporter, etc.
+
+```sh
+kubectl get servicemonitors -n monitoring
+NAME                      AGE
+alertmanager              17m
+blackbox-exporter         17m
+coredns                   17m
+grafana                   17m
+kube-apiserver            17m
+kube-controller-manager   17m
+kube-scheduler            17m
+kube-state-metrics        17m
+kubelet                   17m
+node-exporter             17m
+prometheus-adapter        17m
+prometheus-k8s            17m
+prometheus-operator       17m
+```
+
+Para ver o conteúdo de um ServiceMonitor, basta executar o seguinte comando:
+
+```sh
+kubectl get servicemonitor prometheus-k8s -n monitoring -o yaml
+```
+
+Nesse caso estamos pegando o ServiceMonitor do Prometheus, mas você pode pegar o ServiceMonitor de qualquer outro serviço.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"monitoring.coreos.com/v1","kind":"ServiceMonitor","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"prometheus","app.kubernetes.io/instance":"k8s","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"kube-prometheus","app.kubernetes.io/version":"2.41.0"},"name":"prometheus-k8s","namespace":"monitoring"},"spec":{"endpoints":[{"interval":"30s","port":"web"},{"interval":"30s","port":"reloader-web"}],"selector":{"matchLabels":{"app.kubernetes.io/component":"prometheus","app.kubernetes.io/instance":"k8s","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"kube-prometheus"}}}}
+  creationTimestamp: "2023-01-23T19:08:26Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 2.41.0
+  name: prometheus-k8s
+  namespace: monitoring
+  resourceVersion: "4100"
+  uid: 6042e08c-cf18-4622-9860-3ff43e696f7c
 spec:
-  replicas: 3             # Número inicial de réplicas
+  endpoints:
+  - interval: 30s
+    port: web
+  - interval: 30s
+    port: reloader-web
   selector:
     matchLabels:
-      app: nginx         # Label que identifica os pods deste Deployment
-  template:
-    metadata:
-      labels:
-        app: nginx       # Label aplicada aos pods
-    spec:
-      containers:
-      - name: nginx      # Nome do contêiner
-        image: nginx:latest  # Imagem do contêiner
-        ports:
-        - containerPort: 80  # Porta exposta pelo contêiner
-        resources:
-          limits:
-            cpu: 500m        # Limite de CPU
-            memory: 256Mi    # Limite de memória
-          requests:
-            cpu: 250m        # Requisição de CPU
-            memory: 128Mi    # Requisição de memória
+      app.kubernetes.io/component: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: kube-prometheus
 ```
 
-Agora, com nosso deployment pronto, vamos dar o próximo passo na criação do nosso HPA.
+
+Eu vou dar uma limpada nessa saída para ficar mais fácil de entender:
 
 ```yaml
-# Definição do HPA para o nginx-deployment
-apiVersion: autoscaling/v2  # Versão da API que define um HPA
-kind: HorizontalPodAutoscaler  # Tipo de recurso que estamos definindo
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
 metadata:
-  name: nginx-deployment-hpa  # Nome do nosso HPA
+  annotations:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 2.41.0
+  name: prometheus-k8s
+  namespace: monitoring
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1        # A versão da API do recurso alvo
-    kind: Deployment           # O tipo de recurso alvo
-    name: nginx-deployment     # O nome do recurso alvo
-  minReplicas: 3               # Número mínimo de réplicas
-  maxReplicas: 10              # Número máximo de réplicas
-  metrics:
-  - type: Resource             # Tipo de métrica (recurso do sistema)
-    resource:
-      name: cpu                # Nome da métrica (CPU neste caso)
-      target:
-        type: Utilization      # Tipo de alvo (utilização)
-        averageUtilization: 50 # Valor alvo (50% de utilização)
+  endpoints:
+  - interval: 30s
+    port: web
+  - interval: 30s
+    port: reloader-web
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: kube-prometheus
 ```
 
-Neste exemplo, criamos um HPA que monitora a utilização da CPU do nosso `nginx-deployment`. O HPA se esforçará para manter a utilização da CPU em torno de 50%, ajustando o número de réplicas entre 3 e 10 conforme necessário.
+Pronto, eu tirei algumas informações que não são importantes para a criação do ServiceMonitor, elas apenas trazer as informações do service monitor que foi criado e que pegamos a saída.
 
-Para aplicar esta configuração ao seu cluster Kubernetes, salve o conteúdo acima em um arquivo chamado
+Com o arquivo limpo, podemos entender melhor o que está acontecendo.
 
- `nginx-deployment-hpa.yaml` e execute o seguinte comando:
-
-```bash
-kubectl apply -f nginx-deployment-hpa.yaml
-```
-
-Agora, você tem um HPA monitorando e ajustando a escala do seu `nginx-deployment` baseado na utilização da CPU. Fantástico, não é?
-
-### Exemplos Práticos com HPA
-
-Agora que você já entende o básico sobre o HPA, é hora de rolar as mangas e entrar na prática. Vamos explorar como o HPA responde a diferentes métricas e cenários.
-
-#### Autoscaling com base na utilização de CPU
-
-Vamos começar com um exemplo clássico de escalonamento baseado na utilização da CPU, que já discutimos anteriormente. Para tornar a aprendizagem mais interativa, vamos simular um aumento de tráfego e observar como o HPA responde a essa mudança.
-
-```bash
-kubectl run -i --tty load-generator --image=busybox /bin/sh
-
-while true; do wget -q -O- http://nginx-deployment.default.svc.cluster.local; done
-```
-
-Este script simples cria uma carga constante no nosso deployment, fazendo requisições contínuas ao servidor Nginx. Você poderá observar como o HPA ajusta o número de réplicas para manter a utilização da CPU em torno do limite definido.
-
-#### Autoscaling com base na utilização de Memória
-
-O HPA não é apenas um mestre em lidar com a CPU, ele também tem um olho afiado para a memória. Vamos explorar como configurar o HPA para escalar baseado na utilização de memória.
-
-```yaml
-# Definição do HPA para escalonamento baseado em memória
-apiVersion: autoscaling/v2  # Versão da API que define um HPA
-kind: HorizontalPodAutoscaler    # Tipo de recurso que estamos definindo
-metadata:
-  name: nginx-deployment-hpa-memory  # Nome do nosso HPA
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1              # A versão da API do recurso alvo
-    kind: Deployment                 # O tipo de recurso alvo
-    name: nginx-deployment           # O nome do recurso alvo
-  minReplicas: 3                     # Número mínimo de réplicas
-  maxReplicas: 10                    # Número máximo de réplicas
-  metrics:
-  - type: Resource                   # Tipo de métrica (recurso do sistema)
-    resource:
-      name: memory                   # Nome da métrica (memória neste caso)
-      target:
-        type: Utilization            # Tipo de alvo (utilização)
-        averageUtilization: 70       # Valor alvo (70% de utilização)
-```
-
-Neste exemplo, o HPA vai ajustar o número de réplicas para manter a utilização de memória em cerca de 70%. Assim, nosso deployment pode respirar livremente mesmo quando a demanda aumenta.
-
-#### Configuração Avançada de HPA: Definindo Comportamento de Escalonamento
-
-O HPA é flexível e permite que você defina como ele deve se comportar durante o escalonamento para cima e para baixo. Vamos explorar um exemplo:
-
-```yaml
-# Definição de HPA com configurações avançadas de comportamento
-apiVersion: autoscaling/v2      # Versão da API que define um HPA
-kind: HorizontalPodAutoscaler        # Tipo de recurso que estamos definindo
-metadata:
-  name: nginx-deployment-hpa         # Nome do nosso HPA
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1              # A versão da API do recurso alvo
-    kind: Deployment                 # O tipo de recurso alvo
-    name: nginx-deployment           # O nome do recurso alvo
-  minReplicas: 3                     # Número mínimo de réplicas
-  maxReplicas: 10                    # Número máximo de réplicas
-  metrics:
-  - type: Resource                   # Tipo de métrica (recurso do sistema)
-    resource:
-      name: cpu                      # Nome da métrica (CPU neste caso)
-      target:
-        type: Utilization            # Tipo de alvo (utilização)
-        averageUtilization: 50       # Valor alvo (50% de utilização)
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0  # Período de estabilização para escalonamento para cima
-      policies:
-      - type: Percent                # Tipo de política (percentual)
-        value: 100                   # Valor da política (100%)
-        periodSeconds: 15            # Período da política (15 segundos)
-    scaleDown:
-      stabilizationWindowSeconds: 300  # Período de estabilização para escalonamento para baixo
-      policies:
-      - type: Percent                  # Tipo de política (percentual)
-        value: 100                     # Valor da política (100%)
-        periodSeconds: 15              # Período da política (15 segundos)
-```
-
-Neste exemplo, especificamos um comportamento de escalonamento onde o HPA pode escalar para cima imediatamente, mas vai esperar por 5 minutos (300 segundos) após o último escalonamento para cima antes de considerar um escalonamento para baixo. Isso ajuda a evitar flutuações rápidas na contagem de réplicas, proporcionando um ambiente mais estável para nossos pods.
+* `apiVersion`: Versão da API do Kubernetes que estamos utilizando.
+* `kind`: Tipo de objeto que estamos criando.
+* `metadata`: Informações sobre o objeto que estamos criando.
+* `metadata.annotations`: Anotações que podemos adicionar ao nosso objeto.
+* `metadata.labels`: Labels que podemos adicionar ao nosso objeto.
+* `metadata.name`: Nome do nosso objeto.
+* `metadata.namespace`: Namespace onde o nosso objeto será criado.
+* `spec`: Especificações do nosso objeto.
+* `spec.endpoints`: Endpoints que o nosso ServiceMonitor irá monitorar.
+* `spec.endpoints.interval`: Intervalo de tempo que o Prometheus irá fazer a coleta de métricas.
+* `spec.endpoints.port`: Porta que o Prometheus irá utilizar para coletar as métricas.
+* `spec.selector`: Selector que o ServiceMonitor irá utilizar para encontrar os serviços que ele irá monitorar.
 
 
-#### ContainerResource
 
-O tipo de métrica `ContainerResource` no Kubernetes permite que você especifique métricas de recursos específicas do container para escalar. Diferente das métricas de recurso comuns que são aplicadas a todos os contêineres em um Pod, as métricas `ContainerResource` permitem especificar métricas para um contêiner específico dentro de um Pod. Isso pode ser útil em cenários onde você tem múltiplos contêineres em um Pod, mas quer escalar com base na utilização de recursos de um contêiner específico.
+Com isso, sabemos que o ServiceMonitor do Prometheus irá monitorar os serviços que possuem as labels `app.kubernetes.io/component: prometheus`, `app.kubernetes.io/instance: k8s`, `app.kubernetes.io/name: prometheus` e `app.kubernetes.io/part-of: kube-prometheus`, e que ele irá monitorar as portas `web` e `reloader-web` com um intervalo de 30 segundos. É fácil ou não é?
 
-Aqui está um exemplo de como você pode configurar um Horizontal Pod Autoscaler (HPA) usando uma métrica `ContainerResource` para escalar um Deployment com base na utilização de CPU de um contêiner específico:
-
-```yaml
-apiVersion: autoscaling/v2beta2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: nginx-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: nginx
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-  - type: ContainerResource
-    containerResource:
-      name: cpu
-      container: nginx-NOME-COMPLETO-DO-CONTAINER
-      target:
-        type: Utilization
-        averageUtilization: 50
-```
-
-No exemplo acima:
-
-- O tipo de métrica é definido como `ContainerResource`.
-- Dentro do bloco `containerResource`, especificamos o nome da métrica (`cpu`), o nome do contêiner (`my-container`) e o alvo de utilização (`averageUtilization: 50`).
-
-Isso significa que o HPA vai ajustar o número de réplicas do Deployment `my-app` para manter a utilização média de CPU do contêiner `nginx-NOME-COMPLETO-DO-CONTAINER` em torno de 50%.
-
-Este tipo de configuração permite um controle mais granular sobre o comportamento de autoscaling, especialmente em ambientes onde os Pods contêm múltiplos contêineres com diferentes perfis de utilização de recursos.
-
-
-#### Detalhes do Algoritmo de Escalonamento
-
-**Cálculo do Número de Réplicas**
-O núcleo do Horizontal Pod Autoscaler (HPA) é o seu algoritmo de escalonamento, que determina o número ideal de réplicas com base nas métricas fornecidas. A fórmula básica utilizada pelo HPA para calcular o número desejado de réplicas é:
-
-\[ \text{desiredReplicas} = \lceil \text{currentReplicas} \times \left( \frac{\text{currentMetricValue}}{\text{desiredMetricValue}} \right) \rceil \]
-
-**Exemplos com Valores Específicos:**
-1. **Exemplo de Escala para Cima:**
-   - Réplicas atuais: 2
-   - Valor atual da métrica (CPU): 80%
-   - Valor desejado da métrica (CPU): 50%
-   - Cálculo: \(\lceil 2 \times (80\% / 50\%) \rceil = \lceil 3.2 \rceil = 4\) réplicas
-
-2. **Exemplo de Escala para Baixo:**
-   - Réplicas atuais: 5
-   - Valor atual da métrica (CPU): 30%
-   - Valor desejado da métrica (CPU): 50%
-   - Cálculo: \(\lceil 5 \times (30\% / 50\%) \rceil = \lceil 3 \rceil = 3\) réplicas
-
-**Considerações Sobre Métricas e Estado dos Pods:**
-- **Métricas de Recurso por Pod e Personalizadas:** O HPA pode ser configurado para usar métricas padrão (como CPU e memória) ou métricas personalizadas definidas pelo usuário, permitindo maior flexibilidade.
-- **Tratamento de Pods sem Métricas ou Não Prontos:** Se um Pod não tiver métricas disponíveis ou não estiver pronto, ele pode ser excluído do cálculo de média, evitando decisões de escalonamento baseadas em dados incompletos.
-
-#### Configurações Avançadas e Uso Prático
-
-**Configurando Métricas Personalizadas e Múltiplas Métricas:**
-O HPA não se limita apenas a métricas de CPU e memória; ele pode ser configurado para usar uma variedade de métricas personalizadas.
-
-**Uso de Métricas Personalizadas: Exemplos e Dicas:**
-- **Exemplo:** Suponha que você tenha um serviço que deve escalar com base no número de solicitações HTTP por segundo. Você pode configurar o HPA para escalar com base nessa métrica personalizada.
-- **Dicas:** Ao usar métricas personalizadas, assegure-se de que as métricas sejam um indicador confiável da carga de trabalho e que o serviço de métricas esteja corretamente configurado e acessível pelo HPA.
-
-**Escalonamento com Base em Várias Métricas:**
-- O HPA pode ser configurado para levar em conta várias métricas ao mesmo tempo, permitindo um controle mais refinado do escalonamento.
-- Por exemplo, você pode configurar o HPA para escalar com base tanto na utilização de CPU quanto na memória, ou qualquer combinação de métricas padrão e personalizadas.
-
-
-#### Integrando HPA com Prometheus para Métricas Customizadas
-
-Para levar o autoscaling para o próximo nível, podemos integrar o HPA com o Prometheus. Com essa integração, podemos usar métricas do Prometheus para informar nossas decisões de autoscaling.
-
-A integração geralmente envolve a configuração de um adaptador de métricas personalizadas, como o `k8s-prometheus-adapter`. Uma vez configurado, o HPA pode acessar métricas do Prometheus e usá-las para tomar decisões de autoscaling. A documentação completa sobre como integrar o HPA com o Prometheus pode ser encontrada [aqui](#adicionar-link).
-
-### A sua lição de casa
-
-Agora que você foi equipado com o conhecimento sobre o HPA, é hora de colocar esse conhecimento em prática. Configure um HPA em seu ambiente e experimente com diferentes métricas: CPU, memória e métricas personalizadas. Documente suas observações e compreenda como o HPA responde a diferentes cargas e situações.
-
-### Final do Day-11
-
-E assim, chegamos ao fim do Day-11, uma jornada repleta de aprendizado e exploração. Hoje, você descobriu o poder do Horizontal Pod Autoscaler e como ele pode ajudar a manter seu aplicativo performando de maneira eficiente, mesmo sob diferentes condições de carga. Você não apenas aprendeu como ele funciona, mas também colocou a mão na massa com exemplos práticos. Continue praticando e explorando, e nos vemos no próximo dia da nossa aventura pelo Kubernetes! #VAIIII
+Então sempre que precisarmos criar um ServiceMonitor para monitorar algum serviço, basta criarmos um arquivo YAML com as informações que precisamos e aplicarmos em nosso cluster.

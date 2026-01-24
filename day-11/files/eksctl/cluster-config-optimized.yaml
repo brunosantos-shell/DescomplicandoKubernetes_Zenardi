@@ -1,0 +1,55 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: kube-prometheus-optimized
+  region: sa-east-1
+  version: "1.34"
+
+nodeGroups:
+  # Nodegroup com Spot Instances e Bottlerocket
+  - name: spot-bottlerocket
+    instancesDistribution:
+      instanceTypes:
+        - t3.medium
+        - t3.large
+        - t2.medium
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotPrice: "0.05"
+      spotAllocationStrategy: capacity-optimized
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 5
+    amiFamily: Bottlerocket
+    instancePrefix: spot-bottlerocket
+    tags:
+      NodeType: spot-optimized
+      CostCenter: monitoring
+    labels:
+      workload: monitoring
+      instance-type: spot
+
+  # Nodegroup opcional: On-Demand para workloads críticas
+  # - name: on-demand-standard
+  #   instanceType: t3.medium
+  #   desiredCapacity: 1
+  #   minSize: 1
+  #   maxSize: 3
+  #   taints:
+  #     - key: dedicated
+  #       value: "true"
+  #       effect: NoSchedule
+  #   tags:
+  #     NodeType: on-demand
+  #   labels:
+  #     workload: critical
+
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: ebs-csi-driver
+    version: latest
