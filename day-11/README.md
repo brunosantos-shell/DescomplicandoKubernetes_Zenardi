@@ -6,6 +6,7 @@
     - [Instalando o nosso cluster Kubernetes](#instalando-o-nosso-cluster-kubernetes)
       - [Criando o EKS com arquivos de configuração (on-demand)](#criando-o-eks-com-arquivos-de-configuração-on-demand)
       - [Criar Cluster com Spot Instances e Bottlerocket](#criar-cluster-com-spot-instances-e-bottlerocket)
+      - [Deletar o cluster](#deletar-o-cluster)
     - [Instalando o Kube-Prometheus](#instalando-o-kube-prometheus)
     - [Acessando nosso Grafana](#acessando-nosso-grafana)
     - [Os ServiceMonitors](#os-servicemonitors)
@@ -25,12 +26,17 @@ Hoje é dia de conhecer o sensacional [kube-prometheus](https://github.com/prome
 
 E ainda de quebra você vai aprender como instalar o Kubernetes, mais do que isso, você vai aprender como instalar um cluster EKS! Sim, você vai aprender como instalar um cluster EKS, o cluster de Kubernetes da AWS, através da ferramenta [eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/what-is-eksctl.html), que é uma ferramenta de linha de comando que nos permite instalar um cluster EKS em minutos!
 
+&nbsp;
+
 ### O que é o kube-prometheus?
 
 O kube-prometheus é um conjunto de manifestos do Kubernetes que nos permite ter o Prometheus Operator, Grafana, AlertManager, Node Exporter, Kube-State-Metrics, Prometheus-Adapter instalados e configurados de forma tranquila e com alta disponibilidade. Além disso, ele nos permite ter uma visão completa do nosso cluster de Kubernetes. Ele nos permite monitorar todos os componentes do nosso cluster de Kubernetes, como por exemplo: kube-scheduler, kube-controller-manager, kubelet, kube-proxy, etc.
 
 
+&nbsp;
+
 ### Instalando o nosso cluster Kubernetes
+
 Como dissemos, para esse nosso exemplo iremos utilizar o cluster de Kubernetes da AWS, o EKS. Para instalar o nosso cluster EKS, iremos utilizar a ferramenta [eksctl](https://docs.aws.amazon.com/eks/latest/eksctl/what-is-eksctl.html), portanto precisamos instalá-la em nossa máquina. Para instalar a ferramenta, basta executar o seguinte comando:
 
 ```sh
@@ -91,6 +97,8 @@ O comando acima irá criar um cluster EKS com o nome `eks-cluster`, na região `
 | `--nodes-min` | Mínimo de nós (autoscaling) | 1 |
 | `--nodes-max` | Máximo de nós (autoscaling) | 4 |
 
+&nbsp;
+
 #### Criando o EKS com arquivos de configuração (on-demand)
 
 Para facilitar futuras operações, você pode criar um arquivo YAML:
@@ -125,6 +133,8 @@ addons:
 ```bash
 eksctl create cluster -f files/eksctl/cluster-config.yaml
 ```
+
+&nbsp;
 
 #### Criar Cluster com Spot Instances e Bottlerocket
 
@@ -230,6 +240,20 @@ addons:
 eksctl create cluster -f files/eksctl/cluster-config-optimized.yaml
 ```
 
+&nbsp;
+
+#### Deletar o cluster
+
+Depois de fazer o que se tem pra fazer com o cluster, hora de deleta-lo!
+
+```sh
+eksctl delete cluster -f files/eksctl/cluster-config-optimized.yaml --wait --disable-nodegroup-eviction
+
+eksctl delete cluster -f files/eksctl/cluster-config.yaml --wait --disable-nodegroup-eviction
+```
+
+> [!WARNING] Use a flag `--wait` para operações de deleçao para se garantir que errors de deleção sejam reportados adequadamente.
+
 
 Após a criação do nosso cluster EKS, precisamos instalar o `kubectl` em nossa máquina. Para instalar o kubectl, basta executar o seguinte comando:
 
@@ -292,7 +316,10 @@ eksctl delete cluster --name=eks-cluster -r us-east-1
 Mas não delete o nosso cluster EKS, vamos utilizar ele para os próximos passos! hahahah
 
 
+&nbsp;
+
 ### Instalando o Kube-Prometheus
+
 Agora que já temos o nosso cluster EKS criado, vamos instalar o Kube-Prometheus. Para isso, basta executar o seguinte comando:
 
 ```sh
@@ -481,6 +508,8 @@ Pronto, já temos o Prometheus, Alertmanager, Blackbox Exporter, Node Exporter e
 
 Nesse meu cluster, eu estou com dois nodes, por isso temos dois pods do Node Exporter e dois pods do Prometheus chamados de `prometheus-k8s-0` e `prometheus-k8s-1`.
 
+&nbsp;
+
 ### Acessando nosso Grafana
 
 Agora que já temos o nosso Kube-Prometheus instalado, vamos acessar o nosso Grafana e verificar se está tudo funcionando corretamente. Para isso, vamos utilizar o `kubectl port-forward` para acessar o Grafana localmente. Para isso, basta executar o seguinte comando:
@@ -522,6 +551,8 @@ Também temos Dashboards que mostram detalhes do nosso cluster EKS, como por exe
 
 Eu não vou ficar aqui dando spoilers, vai lá você e confere a quantidade enorme de Dashboards que o Kube-Prometheus já vem com ele. \o/
 
+
+&nbsp;
 
 ### Os ServiceMonitors
 
