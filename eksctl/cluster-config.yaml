@@ -1,0 +1,29 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: kube-prometheus-demo
+  region: sa-east-1
+  version: "1.34"
+
+iam:
+  withOIDC: true
+
+nodeGroups:
+  - name: linux-nodes
+    instanceType: t3.medium
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 3
+    ssh:
+      allow: false
+    tags:
+      Environment: demo
+addons:
+  - name: vpc-cni
+    version: latest
+    attachPolicyARNs:
+      - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest

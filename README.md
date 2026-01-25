@@ -11,6 +11,8 @@
   - [Importe um laboratorio](#importe-um-laboratorio)
   - [Usar uma versao especifica](#usar-uma-versao-especifica)
 - [Provisionando um cluster EKS para testes](#provisionando-um-cluster-eks-para-testes)
+  - [Usando `eksctl` e arquivo de configuração](#usando-eksctl-e-arquivo-de-configuração)
+  - [Deletar o cluster](#deletar-o-cluster)
 
 
 # Descomplicando o Kubernetes - Expert Mode
@@ -467,8 +469,25 @@ Após instalar o eksctl, crie o cluster EKS com o comando:
 > AWS_SECRET_ACCESS_KEY
 ```bash
 eksctl create cluster --name=eks-cluster \
---version=1.24 --region=us-east-1 \
+--version=1.34 --region=us-east-1 \
 --nodegroup-name=eks-cluster-nodegroup \
 --node-type=t3.medium \
 --nodes=2 --nodes-min=1 --nodes-max=3 --managed
+```
+
+## Usando `eksctl` e arquivo de configuração
+```sh
+# Use este comando para provisionar nodes on-demand
+eksctl create cluster -f eksctl/cluster-config.yaml 
+
+# Use este comando para provisionar nodes spot+bottlerocket
+eksctl create cluster -f eksctl/cluster-config-optmized.yaml 
+```
+
+## Deletar o cluster
+Para deletar os clusters criados, execute um dos comandos abaixo.
+
+```sh
+eksctl delete cluster -f eksctl/cluster-config.yaml --wait --disable-nodegroup-eviction 
+eksctl delete cluster -f eksctl/cluster-config-optimized.yaml --wait --disable-nodegroup-eviction 
 ```
