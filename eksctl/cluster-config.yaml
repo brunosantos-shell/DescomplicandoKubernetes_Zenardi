@@ -7,6 +7,11 @@ metadata:
 
 iam:
   withOIDC: true
+  podIdentityAssociations: []
+
+vpc:
+  nat:
+    gateway: Single
 
 managedNodeGroups:
   - name: ng-descomplicandok8s
@@ -21,17 +26,42 @@ managedNodeGroups:
     volumeIOPS: 3000      # Grátis no gp3 (incluso no preço base)
     volumeThroughput: 125 # Grátis no gp3 (incluso no preço base)
 
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
     tags:
       NodeType: on-demand
       env: descomplicandok8s
-      ami-family: ec2-linux
+      ami-family: al2-x86_64
 
 
 addons:
+  # 1. VPC-CNI com Pod Identity
   - name: vpc-cni
     version: latest
-    attachPolicyARNs:
-      - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+    podIdentityAssociations:
+      - namespace: kube-system
+        serviceAccountName: aws-node
+        permissionPolicyARNs:
+          - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+  # 2. EBS CSI Driver com Pod Identity
+  - name: aws-ebs-csi-driver
+    version: latest
+    podIdentityAssociations:
+      - namespace: kube-system
+        serviceAccountName: ebs-csi-controller-sa
+        permissionPolicyARNs:
+          - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+
+  # 3. Addon essencial para o Pod Identity funcionar
+  - name: eks-pod-identity-agent
+    version: latest
+
   - name: coredns
     version: latest
   - name: kube-proxy
