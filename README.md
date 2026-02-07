@@ -334,6 +334,78 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 
 </details>
 
+<details>
+<summary class="summary">DAY-13</summary>
+
+- [Descomplicando Containers - DAY-13](day-13/README.md#descomplicando-containers---day-13)
+- [Imagens Distroless](day-13/README.md#imagens-distroless)
+    - [Por que usar imagens Distroless?](day-13/README.md#por-que-usar-imagens-distroless)
+    - [O conceito de Multi-Stage Build](day-13/README.md#o-conceito-de-multi-stage-build)
+    - [Exemplo Prático: Criando uma imagem Distroless (Golang)](day-13/README.md#exemplo-prático-criando-uma-imagem-distroless-golang)
+      - [Passo 1: O código da aplicação (`main.go`)](day-13/README.md#passo-1-o-código-da-aplicação-maingo)
+      - [Passo 2: O Dockerfile](day-13/README.md#passo-2-o-dockerfile)
+      - [Passo 3: Construir e Rodar](day-13/README.md#passo-3-construir-e-rodar)
+    - [E para linguagens interpretadas (Node.js, Python, Java)?](day-13/README.md#e-para-linguagens-interpretadas-nodejs-python-java)
+    - [O Grande Desafio: Como debugar?](day-13/README.md#o-grande-desafio-como-debugar)
+    - [Resumo Comparativo](day-13/README.md#resumo-comparativo)
+    - [A Evolução: Chainguard Images](day-13/README.md#a-evolução-chainguard-images)
+      - [Principais Diferenciais](day-13/README.md#principais-diferenciais)
+      - [Comparativo: Google Distroless vs. Chainguard](day-13/README.md#comparativo-google-distroless-vs-chainguard)
+      - [Exemplo Prático com Chainguard](day-13/README.md#exemplo-prático-com-chainguard)
+- [A Arte da Minimização: Imagens Distroless](day-13/README.md#a-arte-da-minimização-imagens-distroless)
+  - [Introdução](day-13/README.md#introdução)
+  - [O que é Distroless?](day-13/README.md#o-que-é-distroless)
+  - [Benefícios do Distroless](day-13/README.md#benefícios-do-distroless)
+  - [Desafios do Distroless](day-13/README.md#desafios-do-distroless)
+  - [Implementando Distroless](day-13/README.md#implementando-distroless)
+- [Conclusão](day-13/README.md#conclusão)
+- [Docker Scout](day-13/README.md#docker-scout)
+  - [O que é o Docker Scout?](day-13/README.md#o-que-é-o-docker-scout)
+  - [Como o Docker Scout funciona?](day-13/README.md#como-o-docker-scout-funciona)
+  - [Usando o Docker Scout](day-13/README.md#usando-o-docker-scout)
+  - [Por que o Docker Scout é importante?](day-13/README.md#por-que-o-docker-scout-é-importante)
+    - [Verificação de Segurança (Security Scanning) com Trivy](day-13/README.md#verificação-de-segurança-security-scanning-com-trivy)
+      - [Por que buscar "Zero Vulnerabilidades"?](day-13/README.md#por-que-buscar-zero-vulnerabilidades)
+      - [Como usar o Trivy (Sem instalação)](day-13/README.md#como-usar-o-trivy-sem-instalação)
+      - [Comparativo Prático: Imagem Padrão vs. Chainguard](day-13/README.md#comparativo-prático-imagem-padrão-vs-chainguard)
+      - [Integrando no Dockerfile (Best Practice)](day-13/README.md#integrando-no-dockerfile-best-practice)
+    - [Resumo Final da Documentação](day-13/README.md#resumo-final-da-documentação)
+    - [Análise Nativa com Docker Scout](day-13/README.md#análise-nativa-com-docker-scout)
+      - [Diferença Principal: Contexto vs. Lista](day-13/README.md#diferença-principal-contexto-vs-lista)
+      - [Comandos Essenciais](day-13/README.md#comandos-essenciais)
+      - [Comparando na Prática: Imagem Padrão vs. Distroless](day-13/README.md#comparando-na-prática-imagem-padrão-vs-distroless)
+      - [Comparativo Rápido: Trivy vs. Docker Scout](day-13/README.md#comparativo-rápido-trivy-vs-docker-scout)
+    - [Resumo da Seção](day-13/README.md#resumo-da-seção)
+- [Escaneando as diferentes versões do giropops-senhas](day-13/README.md#escaneando-as-diferentes-versões-do-giropops-senhas)
+  - [Versão 1.0 - Relatório de Vulnerabilidades - Trivy](day-13/README.md#versão-10---relatório-de-vulnerabilidades---trivy)
+  - [Alvo: giropops-senhas:1.0 (debian 13.3)](day-13/README.md#alvo-giropops-senhas10-debian-133)
+    - [Alvo: Python](day-13/README.md#alvo-python)
+  - [Versão 2.0 - Relatório de Vulnerabilidades - Trivy](day-13/README.md#versão-20---relatório-de-vulnerabilidades---trivy)
+  - [Alvo: giropops-senhas:2.0 (debian 13.3)](day-13/README.md#alvo-giropops-senhas20-debian-133)
+    - [Alvo: Python](day-13/README.md#alvo-python-1)
+  - [Versão 3.0 - Relatório de Vulnerabilidades - Trivy](day-13/README.md#versão-30---relatório-de-vulnerabilidades---trivy)
+  - [Alvo: giropops-senhas:3.0 (alpine 3.18.3)](day-13/README.md#alvo-giropops-senhas30-alpine-3183)
+    - [Alvo: Python](day-13/README.md#alvo-python-2)
+  - [Versão 4.0 - Relatório de Vulnerabilidades - Trivy](day-13/README.md#versão-40---relatório-de-vulnerabilidades---trivy)
+    - [Alvo: giropops-senhas:4.0 (wolfi 20230201)](day-13/README.md#alvo-giropops-senhas40-wolfi-20230201)
+    - [Alvo: Python](day-13/README.md#alvo-python-3)
+- [Assinatura de Imagens (Image Signing) com Cosign](day-13/README.md#assinatura-de-imagens-image-signing-com-cosign)
+  - [O que é?](day-13/README.md#o-que-é)
+  - [Por que fazer?](day-13/README.md#por-que-fazer)
+  - [A Ferramenta: Sigstore Cosign](day-13/README.md#a-ferramenta-sigstore-cosign)
+  - [Instalação do Cosign](day-13/README.md#instalação-do-cosign)
+    - [A. macOS (Recomendado)](day-13/README.md#a-macos-recomendado)
+    - [B. Linux (Binário Oficial)](day-13/README.md#b-linux-binário-oficial)
+    - [C. Windows](day-13/README.md#c-windows)
+    - [Verificando a Instalação](day-13/README.md#verificando-a-instalação)
+  - [Tutorial Prático: Assinando com Chaves (Key-based)](day-13/README.md#tutorial-prático-assinando-com-chaves-key-based)
+  - [O Futuro: Keyless Signing (Sem Chaves)](day-13/README.md#o-futuro-keyless-signing-sem-chaves)
+    - [Resumo da Seção](day-13/README.md#resumo-da-seção-1)
+
+</details>
+
+
+
 &nbsp;
 
 

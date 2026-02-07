@@ -6,3 +6,7 @@
 *.crt
 *.cert
 *.key
+*.pub
+*.pem
+venv/
+__pycache__/
