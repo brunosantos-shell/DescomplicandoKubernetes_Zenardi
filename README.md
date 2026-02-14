@@ -13,6 +13,7 @@
 - [Provisionando um cluster EKS para testes](#provisionando-um-cluster-eks-para-testes)
   - [Usando `eksctl` e arquivo de configuração](#usando-eksctl-e-arquivo-de-configuração)
   - [Deletar o cluster](#deletar-o-cluster)
+- [Certificado](#certificado)
 
 
 # Descomplicando o Kubernetes - Expert Mode
@@ -404,7 +405,37 @@ O foco do treinamento é capacitar a pessoa para trabalhar com Kubernetes de man
 
 </details>
 
+<details>
+<summary class="summary">DAY-14 - Descomplicando Autoscaling no Kubernetes com o HPA - Horizontal Pod Autoscaler e Metrics-Server</summary>
 
+- [Descomplicando o Kubernetes](day-14/README.md#descomplicando-o-kubernetes)
+  - [DAY-14](day-14/README.md#day-14)
+  - [Conteúdo do Day-14](day-14/README.md#conteúdo-do-day-14)
+    - [Início da aula do Day-14](day-14/README.md#início-da-aula-do-day-14)
+      - [O que iremos ver hoje?](day-14/README.md#o-que-iremos-ver-hoje)
+      - [Introdução ao Horizontal Pod Autoscaler (HPA)](day-14/README.md#introdução-ao-horizontal-pod-autoscaler-hpa)
+      - [Como o HPA Funciona?](day-14/README.md#como-o-hpa-funciona)
+  - [Introdução ao Metrics Server](day-14/README.md#introdução-ao-metrics-server)
+    - [Por que o Metrics Server é importante para o HPA?](day-14/README.md#por-que-o-metrics-server-é-importante-para-o-hpa)
+    - [Instalando o Metrics Server](day-14/README.md#instalando-o-metrics-server)
+      - [No Amazon EKS e na maioria dos clusters Kubernetes](day-14/README.md#no-amazon-eks-e-na-maioria-dos-clusters-kubernetes)
+      - [No Minikube:](day-14/README.md#no-minikube)
+      - [No KinD (Kubernetes in Docker):](day-14/README.md#no-kind-kubernetes-in-docker)
+      - [Verificando a Instalação do Metrics Server](day-14/README.md#verificando-a-instalação-do-metrics-server)
+      - [Obtendo Métricas](day-14/README.md#obtendo-métricas)
+    - [Criando um HPA](day-14/README.md#criando-um-hpa)
+    - [Exemplos Práticos com HPA](day-14/README.md#exemplos-práticos-com-hpa)
+      - [Autoscaling com base na utilização de CPU](day-14/README.md#autoscaling-com-base-na-utilização-de-cpu)
+      - [Autoscaling com base na utilização de Memória](day-14/README.md#autoscaling-com-base-na-utilização-de-memória)
+      - [Configuração Avançada de HPA: Definindo Comportamento de Escalonamento](day-14/README.md#configuração-avançada-de-hpa-definindo-comportamento-de-escalonamento)
+      - [ContainerResource](day-14/README.md#containerresource)
+      - [Detalhes do Algoritmo de Escalonamento](day-14/README.md#detalhes-do-algoritmo-de-escalonamento)
+      - [Configurações Avançadas e Uso Prático](day-14/README.md#configurações-avançadas-e-uso-prático)
+      - [Integrando HPA com Prometheus para Métricas Customizadas](day-14/README.md#integrando-hpa-com-prometheus-para-métricas-customizadas)
+    - [A sua lição de casa](day-14/README.md#a-sua-lição-de-casa)
+    - [Final do Day-14](day-14/README.md#final-do-day-14)
+
+</details>
 
 &nbsp;
 
@@ -474,3 +505,7 @@ eksctl delete cluster -f eksctl/cluster-config.yaml --wait --disable-nodegroup-e
 eksctl delete cluster -f eksctl/cluster-config-optimized.yaml --wait --disable-nodegroup-eviction
 eksctl delete cluster -f eksctl/cluster-config-no-nat.yaml --wait --disable-nodegroup-eviction
 ```
+
+# Certificado
+
+---

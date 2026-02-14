@@ -1,0 +1,63 @@
+# Definição de um Deployment para o servidor Nginx
+apiVersion: apps/v1  # Versão da API que define um Deployment
+kind: Deployment     # Tipo de recurso que estamos definindo
+metadata:
+  name: nginx-deployment  # Nome do nosso Deployment
+spec:
+  replicas: 3             # Número inicial de réplicas
+  selector:
+    matchLabels:
+      app: nginx       # Label que identifica os pods deste Deployment
+  template:
+    metadata:
+      labels:
+        app: nginx       # Label aplicada aos pods
+    spec:
+      containers:
+      - name: nginx      # Nome do contêiner
+        image: nginx:latest  # Imagem do contêiner
+        ports:
+        - containerPort: 80  # Porta exposta pelo contêiner
+        resources:
+          limits:
+            cpu: 500m        # Limite de CPU
+            memory: 256Mi    # Limite de memória
+          requests:
+            cpu: 250m        # Requisição de CPU
+            memory: 128Mi    # Requisição de memória
+
+--- 
+
+# Definição do HPA para escalonamento baseado em memória
+apiVersion: autoscaling/v2  # Versão da API que define um HPA
+kind: HorizontalPodAutoscaler    # Tipo de recurso que estamos definindo
+metadata:
+  name: nginx-deployment-hpa-memory  # Nome do nosso HPA
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1              # A versão da API do recurso alvo
+    kind: Deployment                 # O tipo de recurso alvo
+    name: nginx-deployment           # O nome do recurso alvo
+  minReplicas: 3                     # Número mínimo de réplicas
+  maxReplicas: 10                    # Número máximo de réplicas
+  metrics:
+  - type: Resource                   # Tipo de métrica (recurso do sistema)
+    resource:
+      name: memory                   # Nome da métrica (memória neste caso)
+      target:
+        type: Utilization            # Tipo de alvo (utilização)
+        averageUtilization: 70       # Valor alvo (70% de utilização)
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-deployment-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
